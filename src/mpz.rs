@@ -2,11 +2,14 @@
 //!
 //! [MPIR 3.0.0 - C documentation](https://mpir.org/mpir-3.0.0.pdf)
 
-use std::mem::{size_of, uninitialized};
+use crate::error::ParseMpzError;
+
+#[allow(deprecated)]
+use std::mem::uninitialized;
 
 use crate::ctype::{
-    c_char, c_double, c_int, c_long, c_ulong, c_void, mp_bitcnt_t, mpz_ptr, mpz_srcptr, mpz_struct,
-    size_t, CString, mp_limb_t
+    c_char, c_double, c_int, c_long, c_ulong, mp_bitcnt_t, mpz_ptr, mpz_srcptr, mpz_struct, size_t,
+    CString,
 };
 
 use crate::Sign;
@@ -18,13 +21,13 @@ extern "C" {
     // Constants
 
     /// The MPIR version number, as a null-terminated string, in the form “i.j.k”.
-    static mpir_version: *const c_char;
+    pub static mpir_version: *const c_char;
 
     /// The GNU MP version number, as a null-terminated string, in the form “i.j.k”.
-    static gmp_version: *const c_char;
+    pub static gmp_version: *const c_char;
 
     /// The number of bits per limb.
-    static mp_bits_per_limb: c_int;
+    pub static mp_bits_per_limb: c_int;
 
     // ---------------------------------------------------------------------------------------------
     // Initialisation Functions
@@ -70,7 +73,7 @@ extern "C" {
     /* These functions assign new values to already initialized integers */
 
     /// Set the value of rop from another mpz.
-    pub fn mpz_set(rop: mpz_ptr, op: mpz_ptr);
+    pub fn mpz_set(rop: mpz_ptr, op: mpz_srcptr);
 
     /// Set the value of rop from op.
     pub fn mpz_set_ui(rop: mpz_ptr, op: c_ulong);
@@ -367,7 +370,7 @@ extern "C" {
     /// n is divisible by d if there exists an integer q satisfying n = qd. Unlike the other division
     /// functions, d = 0 is accepted and following the rule it can be seen that only 0 is considered
     /// divisible by 0.
-    pub fn mpz_divisible_p(n: mpz_ptr, d: mpz_srcptr) -> c_int;
+    pub fn mpz_divisible_p(n: mpz_srcptr, d: mpz_srcptr) -> c_int;
 
     /// Return non-zero if n is exactly divisible by d, or in the case of mpz_divisible_2exp_p by 2b.
     ///
@@ -508,46 +511,40 @@ extern "C" {
     // /// (Section 9.1 [Random State Initialization], page 67) before invoking this function.
     // pub fn mpz_next_prime_candidate(mpz t rop, mpz t op, gmp randstate t state);
 
-    // TODO mpz_gcd
-    // /// Set rop to the greatest common divisor of op1 and op2. The result is always positive even if
-    // /// one or both input operands are negative.
-    // pub fn mpz_gcd(mpz t rop, mpz t op1, mpz t op2);
+    /// Set rop to the greatest common divisor of op1 and op2. The result is always positive even if
+    /// one or both input operands are negative.
+    pub fn mpz_gcd(rop: mpz_ptr, op1: mpz_srcptr, op2: mpz_srcptr);
 
-    // TODO mpz_gcd_ui
-    // /// Compute the greatest common divisor of op1 and op2. If rop is not NULL, store the result
-    // /// there.
-    // /// If the result is small enough to fit in an mpir_ui, it is returned. If the result does not fit, 0
-    // /// is returned, and the result is equal to the argument op1. Note that the result will always fit
-    // /// if op2 is non-zero.
-    // pub fn mpz_gcd_ui (mpz t rop, mpz t op1, mpir ui op2) -> c_ulong;
+    /// Compute the greatest common divisor of op1 and op2. If rop is not NULL, store the result
+    /// there.
+    /// If the result is small enough to fit in an mpir_ui, it is returned. If the result does not fit, 0
+    /// is returned, and the result is equal to the argument op1. Note that the result will always fit
+    /// if op2 is non-zero.
+    pub fn mpz_gcd_ui(rop: mpz_ptr, op1: mpz_srcptr, op2: c_ulong) -> c_ulong;
 
-    // TODO mpz_gcdext
-    // /// Set g to the greatest common divisor of a and b, and in addition set s and t to coefficients
-    // /// satisfying as + bt = g. The value in g is always positive, even if one or both of a and b
-    // /// are negative (or zero if both inputs are zero). The values in s and t are chosen such that
-    // /// normally, |s| < |b|/(2g) and |t| < |a|/(2g), and these relations define s and t uniquely. There
-    // /// are a few exceptional cases:
-    // /// If |a| = |b|, then s = 0, t = sgn(b).
-    // /// Otherwise, s = sgn(a) if b = 0 or |b| = 2g, and t = sgn(b) if a = 0 or |a| = 2g.
-    // /// In all cases, s = 0 if and only if g = |b|, i.e., if b divides a or a = b = 0.
-    // /// If t is NULL then that value is not computed.
-    // pub fn mpz_gcdext(mpz t g, mpz t s, mpz t t, const mpz t a, const mpz t b);
+    /// Set g to the greatest common divisor of a and b, and in addition set s and t to coefficients
+    /// satisfying as + bt = g. The value in g is always positive, even if one or both of a and b
+    /// are negative (or zero if both inputs are zero). The values in s and t are chosen such that
+    /// normally, |s| < |b|/(2g) and |t| < |a|/(2g), and these relations define s and t uniquely. There
+    /// are a few exceptional cases:
+    /// If |a| = |b|, then s = 0, t = sgn(b).
+    /// Otherwise, s = sgn(a) if b = 0 or |b| = 2g, and t = sgn(b) if a = 0 or |a| = 2g.
+    /// In all cases, s = 0 if and only if g = |b|, i.e., if b divides a or a = b = 0.
+    /// If t is NULL then that value is not computed.
+    pub fn mpz_gcdext(g: mpz_ptr, s: mpz_ptr, t: mpz_ptr, a: mpz_srcptr, b: mpz_srcptr);
 
-    // TODO mpz_lcm
-    // /// Set rop to the least common multiple of op1 and op2. rop is always positive, irrespective of
-    // /// the signs of op1 and op2. rop will be zero if either op1 or op2 is zero.
-    // pub fn mpz_lcm(mpz t rop, mpz t op1, mpz t op2);
+    /// Set rop to the least common multiple of op1 and op2. rop is always positive, irrespective of
+    /// the signs of op1 and op2. rop will be zero if either op1 or op2 is zero.
+    pub fn mpz_lcm(rop: mpz_srcptr, op1: mpz_srcptr, op2: mpz_srcptr);
 
-    // TODO mpz_lcm_ui
-    // /// Set rop to the least common multiple of op1 and op2. rop is always positive, irrespective of
-    // /// the signs of op1 and op2. rop will be zero if either op1 or op2 is zero.
-    // pub fn mpz_lcm_ui (mpz t rop, mpz t op1, mpir ui op2);
+    /// Set rop to the least common multiple of op1 and op2. rop is always positive, irrespective of
+    /// the signs of op1 and op2. rop will be zero if either op1 or op2 is zero.
+    pub fn mpz_lcm_ui(rop: mpz_srcptr, op1: mpz_srcptr, op2: c_ulong);
 
-    // TODO mpz_invert
-    // /// Compute the inverse of op1 modulo op2 and put the result in rop. If the inverse exists, the
-    // /// return value is non-zero and rop will satisfy 0 ≤ rop < op2. If an inverse doesn’t exist the
-    // /// return value is zero and rop is undefined.
-    // pub fn mpz_invert (mpz t rop, mpz t op1, mpz t op2) -> c_int;
+    /// Compute the inverse of op1 modulo op2 and put the result in rop. If the inverse exists, the
+    /// return value is non-zero and rop will satisfy 0 ≤ rop < op2. If an inverse doesn’t exist the
+    /// return value is zero and rop is undefined.
+    pub fn mpz_invert(rop: mpz_srcptr, op1: mpz_srcptr, op2: mpz_srcptr) -> c_int;
 
     // TODO mpz_jacobi
     // /// Calculate the Jacobi symbol ( a b ).
@@ -697,49 +694,49 @@ extern "C" {
     ///
     /// mpz_cmp_ui and mpz_cmp_si are macros and will evaluate their arguments more than once.
     /// mpz_cmp_d can be called with an infinity, but results are undefined for a NaN.
-    pub fn mpz_cmp (op1: mpz_srcptr, op2: mpz_srcptr) -> c_int;
+    pub fn mpz_cmp(op1: mpz_srcptr, op2: mpz_srcptr) -> c_int;
 
     /// Compare op1 and op2. Return a positive value if op1 > op2, zero if op1 = op2, or a negative
     /// value if op1 < op2.
     ///
     /// mpz_cmp_ui and mpz_cmp_si are macros and will evaluate their arguments more than once.
     /// mpz_cmp_d can be called with an infinity, but results are undefined for a NaN.
-    pub fn mpz_cmp_d (op1: mpz_srcptr, op2: c_double) -> c_int;
+    pub fn mpz_cmp_d(op1: mpz_srcptr, op2: c_double) -> c_int;
 
     /// Compare op1 and op2. Return a positive value if op1 > op2, zero if op1 = op2, or a negative
     /// value if op1 < op2.
     ///cros and will evaluate their arguments more than once.
     /// mpz_cmp_d can be called with an infinity, but results are undefined for a NaN.
-    pub fn mpz_cmp_si (op1: mpz_srcptr, op2: c_long) -> c_int;
+    pub fn mpz_cmp_si(op1: mpz_srcptr, op2: c_long) -> c_int;
 
     /// Compare op1 and op2. Return a positive value if op1 > op2, zero if op1 = op2, or a negative
     /// value if op1 < op2.
     ///
     /// mpz_cmp_ui and mpz_cmp_si are macros and will evaluate their arguments more than once.
     /// mpz_cmp_d can be called with an infinity, but results are undefined for a NaN.
-    pub fn mpz_cmp_ui (op1: mpz_srcptr, op2: c_ulong) -> c_int;
+    pub fn mpz_cmp_ui(op1: mpz_srcptr, op2: c_ulong) -> c_int;
 
     /// Compare the absolute values of op1 and op2. Return a positive value if |op1| > |op2|, zero
     /// if |op1| = |op2|, or a negative value if |op1| < |op2|.
     ///
     /// mpz_cmpabs_d can be called with an infinity, but results are undefined for a NaN.
-    pub fn mpz_cmpabs (op1: mpz_srcptr, op2: mpz_srcptr) -> c_int;
+    pub fn mpz_cmpabs(op1: mpz_srcptr, op2: mpz_srcptr) -> c_int;
 
     /// Compare the absolute values of op1 and op2. Return a positive value if |op1| > |op2|, zero
     /// if |op1| = |op2|, or a negative value if |op1| < |op2|.
     ///
     /// mpz_cmpabs_d can be called with an infinity, but results are undefined for a NaN.
-    pub fn mpz_cmpabs_d (op1: mpz_srcptr, op2: c_double) -> c_int;
+    pub fn mpz_cmpabs_d(op1: mpz_srcptr, op2: c_double) -> c_int;
 
     /// Compare the absolute values of op1 and op2. Return a positive value if |op1| > |op2|, zero
     /// if |op1| = |op2|, or a negative value if |op1| < |op2|.
     ///
     /// mpz_cmpabs_d can be called with an infinity, but results are undefined for a NaN.
-    pub fn mpz_cmpabs_ui (op1: mpz_srcptr, op2: c_ulong) -> c_int;
+    pub fn mpz_cmpabs_ui(op1: mpz_srcptr, op2: c_ulong) -> c_int;
 
     /// Return +1 if op > 0, 0 if op = 0, and −1 if op < 0.
     /// This function is actually implemented as a macro. It evaluates its argument multiple times.
-    fn mpz_sgn (op1: mpz_srcptr) -> c_int;
+    pub fn mpz_sgn(op1: mpz_srcptr) -> c_int;
 
     // ---------------------------------------------------------------------------------------------
     // Logical and Bit Manipulation Functions
@@ -748,28 +745,28 @@ extern "C" {
     is the actual implementation). The least significant bit is number 0. */
 
     /// Set rop to op1 bitwise-and op2.
-    pub fn mpz_and (rop: mpz_ptr, op1: mpz_srcptr, op2: mpz_srcptr);
+    pub fn mpz_and(rop: mpz_ptr, op1: mpz_srcptr, op2: mpz_srcptr);
 
     /// Set rop to op1 bitwise inclusive-or op2.
-    pub fn mpz_ior (rop: mpz_ptr, op1: mpz_srcptr, op2: mpz_srcptr);
+    pub fn mpz_ior(rop: mpz_ptr, op1: mpz_srcptr, op2: mpz_srcptr);
 
     /// Set rop to op1 bitwise exclusive-or op2.
-    pub fn mpz_xor (rop: mpz_ptr, op1: mpz_srcptr, op2: mpz_srcptr);
+    pub fn mpz_xor(rop: mpz_ptr, op1: mpz_srcptr, op2: mpz_srcptr);
 
     /// Set rop to the one’s complement of op.
-    pub fn mpz_com (rop: mpz_ptr, op: mpz_srcptr);
+    pub fn mpz_com(rop: mpz_ptr, op: mpz_srcptr);
 
     /// If op ≥ 0, return the population count of op, which is the number of 1 bits in the binary
     /// representation. If op < 0, the number of 1s is infinite, and the return value is ULONG MAX,
     /// the largest possible mp_bitcnt_t.
-    pub fn mpz_popcount (rop: mpz_ptr) -> mp_bitcnt_t;
+    pub fn mpz_popcount(rop: mpz_srcptr) -> mp_bitcnt_t;
 
     /// If op1 and op2 are both ≥ 0 or both < 0, return the hamming distance between the two
     /// operands, which is the number of bit positions where op1 and op2 have different bit values.
     ///
     /// If one operand is ≥ 0 and the other < 0 then the number of bits different is infinite, and the
     /// return value is the largest possible imp_bitcnt_t.
-    pub fn mpz_hamdist (op1: mpz_srcptr, op2: mpz_srcptr) -> mp_bitcnt_t;
+    pub fn mpz_hamdist(op1: mpz_srcptr, op2: mpz_srcptr) -> mp_bitcnt_t;
 
     /// Scan op, starting from bit starting bit, towards more significant bits, until the first 0 or 1 bit
     /// (respectively) is found. Return the index of the found bit.
@@ -778,7 +775,7 @@ extern "C" {
     /// If there’s no bit found, then the largest possible mp_bitcnt_t is returned. This will happen
     /// in mpz_scan0 past the end of a positive number, or mpz_scan1 past the end of a nonnegative
     /// number.
-    pub fn mpz_scan0 (op: mpz_srcptr, starting_bit: mp_bitcnt_t) -> mp_bitcnt_t;
+    pub fn mpz_scan0(op: mpz_srcptr, starting_bit: mp_bitcnt_t) -> mp_bitcnt_t;
 
     /// Scan op, starting from bit starting bit, towards more significant bits, until the first 0 or 1 bit
     /// (respectively) is found. Return the index of the found bit.
@@ -787,19 +784,19 @@ extern "C" {
     /// If there’s no bit found, then the largest possible mp_bitcnt_t is returned. This will happen
     /// in mpz_scan0 past the end of a positive number, or mpz_scan1 past the end of a nonnegative
     /// number.
-    pub fn mpz_scan1 (op: mpz_srcptr, starting_bit: mp_bitcnt_t) -> mp_bitcnt_t;
+    pub fn mpz_scan1(op: mpz_srcptr, starting_bit: mp_bitcnt_t) -> mp_bitcnt_t;
 
     /// Set bit bit index in rop.
-    pub fn mpz_setbit (rop: mpz_ptr, bit_index: mp_bitcnt_t);
+    pub fn mpz_setbit(rop: mpz_ptr, bit_index: mp_bitcnt_t);
 
     /// Clear bit bit index in rop.
-    pub fn mpz_clrbit (rop: mpz_ptr, bit_index: mp_bitcnt_t);
+    pub fn mpz_clrbit(rop: mpz_ptr, bit_index: mp_bitcnt_t);
 
     /// Complement bit bit index in rop.
-    pub fn mpz_combit (rop: mpz_ptr, bit_index: mp_bitcnt_t);
+    pub fn mpz_combit(rop: mpz_ptr, bit_index: mp_bitcnt_t);
 
     /// Test bit bit index in op and return 0 or 1 accordingly.
-    pub fn mpz_tstbit (op: mpz_srcptr, starting_bit: mp_bitcnt_t) -> c_int;
+    pub fn mpz_tstbit(op: mpz_srcptr, starting_bit: mp_bitcnt_t) -> c_int;
 
     // ---------------------------------------------------------------------------------------------
     // Random Number Functions
@@ -840,35 +837,35 @@ extern "C" {
 
     /// Return non-zero iff the value of op fits in an unsigned long, long, unsigned int, signed
     /// int, unsigned short int, or signed short int, respectively. Otherwise, return zero.
-    pub fn mpz_fits_ulong_p (op: mpz_srcptr) -> c_int;
+    pub fn mpz_fits_ulong_p(op: mpz_srcptr) -> c_int;
 
     /// Return non-zero iff the value of op fits in an unsigned long, long, unsigned int, signed
     /// int, unsigned short int, or signed short int, respectively. Otherwise, return zero.
-    pub fn mpz_fits_slong_p (op: mpz_srcptr) -> c_int;
+    pub fn mpz_fits_slong_p(op: mpz_srcptr) -> c_int;
 
     /// Return non-zero iff the value of op fits in an unsigned long, long, unsigned int, signed
     /// int, unsigned short int, or signed short int, respectively. Otherwise, return zero.
-    pub fn mpz_fits_uint_p (op: mpz_srcptr) -> c_int;
+    pub fn mpz_fits_uint_p(op: mpz_srcptr) -> c_int;
 
     /// Return non-zero iff the value of op fits in an unsigned long, long, unsigned int, signed
     /// int, unsigned short int, or signed short int, respectively. Otherwise, return zero.
-    pub fn mpz_fits_sint_p (op: mpz_srcptr) -> c_int;
+    pub fn mpz_fits_sint_p(op: mpz_srcptr) -> c_int;
 
     /// Return non-zero iff the value of op fits in an unsigned long, long, unsigned int, signed
     /// int, unsigned short int, or signed short int, respectively. Otherwise, return zero.
-    pub fn mpz_fits_ushort_p (op: mpz_srcptr) -> c_int;
+    pub fn mpz_fits_ushort_p(op: mpz_srcptr) -> c_int;
 
     /// Return non-zero iff the value of op fits in an unsigned long, long, unsigned int, signed
     /// int, unsigned short int, or signed short int, respectively. Otherwise, return zero.
-    pub fn mpz_fits_sshort_p (op: mpz_srcptr) -> c_int;
+    pub fn mpz_fits_sshort_p(op: mpz_srcptr) -> c_int;
 
     /// Determine whether op is odd or even, respectively. Return non-zero if yes, zero if no. These
     /// macros evaluate their argument more than once.
-    pub fn mpz_odd_p (op: mpz_srcptr) -> c_int;
+    pub fn mpz_odd_p(op: mpz_srcptr) -> c_int;
 
     /// Determine whether op is odd or even, respectively. Return non-zero if yes, zero if no. These
     /// macros evaluate their argument more than once.
-    pub fn mpz_even_p (op: mpz_srcptr) -> c_int;
+    pub fn mpz_even_p(op: mpz_srcptr) -> c_int;
 
     /// Return the size of op measured in number of digits in the given base. base can vary from 2
     /// to 36.
@@ -884,7 +881,7 @@ extern "C" {
     /// It will be noted that mpz_sizeinbase(op,2) can be used to locate the most significant 1 bit
     /// in op, counting from 1. (Unlike the bitwise functions which start from 0, See Section 5.11
     /// [Logical and Bit Manipulation Functions], page 39.)
-    pub fn mpz_sizeinbase (op: mpz_srcptr, base: c_int) -> size_t;
+    pub fn mpz_sizeinbase(op: mpz_srcptr, base: c_int) -> size_t;
 
     // ---------------------------------------------------------------------------------------------
     // Special Functions
@@ -938,7 +935,7 @@ extern "C" {
 
     /// Return the size of op measured in number of limbs. If op is zero, the returned value will be
     /// zero.
-    fn mpz_size (op: mpz_srcptr) -> size_t;
+    pub fn mpz_size(op: mpz_srcptr) -> size_t;
 
     // TODO mpz_limbs_read
     // /// Return a pointer to the limb array representing the absolute value of x.
@@ -1009,12 +1006,398 @@ extern "C" {
 
 pub struct Mpz(mpz_struct);
 
-impl Mpz {}
+#[allow(deprecated)]
+unsafe fn uninit<T>() -> T {
+    uninitialized::<T>()
+}
+
+impl Mpz {
+    //! Integer functions
+
+    /// Returns inner as a immutable pointer
+    pub unsafe fn inner(&self) -> mpz_srcptr {
+        &self.0
+    }
+
+    /// Returns inner as a mutable pointer
+    pub unsafe fn inner_mut(&mut self) -> mpz_ptr {
+        &mut self.0
+    }
+
+    /// Initialises an instance with a value of `0`
+    pub fn new() -> Mpz {
+        unsafe {
+            let mut mpz = uninit();
+            mpz_init(&mut mpz);
+            Self(mpz)
+        }
+    }
+
+    /// Initialises an instance with a value of `0` and a pre-allocated size of `n`
+    pub fn new_reserve(n: usize) -> Mpz {
+        unsafe {
+            let mut mpz = uninit();
+            mpz_init2(&mut mpz, n as c_ulong);
+            Self(mpz)
+        }
+    }
+
+    /// Reallocate an existing instance with a new size.
+    ///
+    /// If the value fits into the new allocation, the value will be preserved.
+    /// Otherwise, the value will be set to 0.
+    pub fn reserve(&mut self, n: usize) {
+        if self.bit_length() < n {
+            unsafe { mpz_realloc2(&mut self.0, n as c_ulong) }
+        }
+    }
+
+    /// Return the size of op measured in number of digits in the given base.
+    ///
+    /// base can vary from 2 to 36.
+    /// The sign of op is ignored, just the absolute value is used. The result will be either
+    /// exact or 1 too big. If base is a power of 2, the result is always exact. If op is zero the return
+    /// value is always 1.
+    ///
+    ///  This function can be used to determine the space required when converting op to a string. The
+    ///  right amount of allocation is normally two more than the value returned by mpz_sizeinbase,
+    ///  one extra for a minus sign and one for the null-terminator.
+    ///
+    ///  It will be noted that mpz_sizeinbase(op,2) can be used to locate the most significant 1 bit
+    ///  in op, counting from 1. (Unlike the bitwise functions which start from 0,
+    pub fn size_in_base(&self, base: u8) -> usize {
+        unsafe { mpz_sizeinbase(&self.0, base as c_int) as usize }
+    }
+
+    /// TODO
+    pub fn to_str_radix(&self, base: u8) -> String {
+        unsafe {
+            // Extra two bytes are for possible minus sign and null terminator
+            let len = mpz_sizeinbase(&self.0, base as c_int) as usize + 2;
+
+            // Allocate and write into a raw *c_char of the correct length
+            let mut vector: Vec<u8> = Vec::with_capacity(len);
+            vector.set_len(len);
+
+            mpz_get_str(vector.as_mut_ptr() as *mut _, base as c_int, &self.0);
+
+            let mut first_nul = None;
+            let mut index: usize = 0;
+            for elem in &vector {
+                if *elem == 0 {
+                    first_nul = Some(index);
+                    break;
+                }
+                index += 1;
+            }
+            let first_nul = first_nul.unwrap_or(len);
+
+            vector.truncate(first_nul);
+            match String::from_utf8(vector) {
+                Ok(s) => s,
+                Err(_) => panic!("GMP returned invalid UTF-8!"),
+            }
+        }
+    }
+
+    /// TODO
+    pub fn from_str_radix(s: &str, base: u8) -> Result<Mpz, ParseMpzError> {
+        let s = CString::new(s.to_string()).map_err(|_| ParseMpzError::default())?;
+        unsafe {
+            assert!(base == 0 || (base >= 2 && base <= 62));
+            let mut mpz = uninit();
+            let r = mpz_init_set_str(&mut mpz, s.as_ptr(), base as c_int);
+            if r == 0 {
+                Ok(Self(mpz))
+            } else {
+                mpz_clear(&mut mpz);
+                Err(ParseMpzError::default())
+            }
+        }
+    }
+
+    /// TODO
+    pub fn set(&mut self, other: &Mpz) {
+        unsafe { mpz_set(&mut self.0, &other.0) }
+    }
+
+    /// TODO
+    pub fn set_from_str_radix(&mut self, s: &str, base: u8) -> bool {
+        assert!(base == 0 || (base >= 2 && base <= 62));
+        let s = CString::new(s.to_string()).unwrap();
+        unsafe { mpz_set_str(&mut self.0, s.as_ptr(), base as c_int) == 0 }
+    }
+
+    /// Number of bits used
+    pub fn bit_length(&self) -> usize {
+        unsafe { mpz_sizeinbase(&self.0, 2) as usize }
+    }
+
+    /// TODO
+    pub fn complement(&self) -> Mpz {
+        unsafe {
+            let mut res = Mpz::new();
+            mpz_com(&mut res.0, &self.0);
+            res
+        }
+    }
+
+    /// TODO
+    pub fn abs(&self) -> Mpz {
+        unsafe {
+            let mut res = Mpz::new();
+            mpz_abs(&mut res.0, &self.0);
+            res
+        }
+    }
+
+    /// TODO
+    pub fn div_floor(&self, other: &Mpz) -> Mpz {
+        unsafe {
+            if other.is_zero() {
+                panic!("divide by zero")
+            }
+
+            let mut res = Mpz::new();
+            mpz_fdiv_q(&mut res.0, &self.0, &other.0);
+            res
+        }
+    }
+
+    // TODO div ceil
+
+    /// TODO
+    pub fn mod_floor(&self, other: &Mpz) -> Mpz {
+        unsafe {
+            if other.is_zero() {
+                panic!("divide by zero")
+            }
+
+            let mut res = Mpz::new();
+            mpz_fdiv_r(&mut res.0, &self.0, &other.0);
+            res
+        }
+    }
+
+    // TODO mod ceil
+
+    /// TODO
+    // pub fn probab_prime(&self, reps: i32) -> ProbabPrimeResult {
+    //     match unsafe { mpz_probab_prime_p(&self.0, reps as c_int) as u8 } {
+    //         2 => ProbabPrimeResult::Prime,
+    //         1 => ProbabPrimeResult::ProbablyPrime,
+    //         0 => ProbabPrimeResult::NotPrime,
+    //         x => panic!("Undocumented return value {} from mpz_probab_prime_p", x),
+    //     }
+    // }
+
+    /// TODO
+    // pub fn nextprime(&self) -> Mpz {
+    //     unsafe {
+    //         let mut res = Mpz::new();
+    //         mpz_nextprime(&mut res.0, &self.0);
+    //         res
+    //     }
+    // }
+
+    /// TODO
+    pub fn gcd(&self, other: &Mpz) -> Mpz {
+        unsafe {
+            let mut res = Mpz::new();
+            mpz_gcd(&mut res.0, &self.0, &other.0);
+            res
+        }
+    }
+
+    /// Given (a, b), return (g, s, t) such that g = gcd(a, b) = s*a + t*b.
+    pub fn gcdext(&self, other: &Mpz) -> (Mpz, Mpz, Mpz) {
+        unsafe {
+            let mut g = Mpz::new();
+            let mut s = Mpz::new();
+            let mut t = Mpz::new();
+            mpz_gcdext(&mut g.0, &mut s.0, &mut t.0, &self.0, &other.0);
+            (g, s, t)
+        }
+    }
+
+    /// TODO
+    pub fn lcm(&self, other: &Mpz) -> Mpz {
+        unsafe {
+            let mut res = Mpz::new();
+            mpz_lcm(&mut res.0, &self.0, &other.0);
+            res
+        }
+    }
+
+    /// TODO
+    pub fn is_multiple_of(&self, other: &Mpz) -> bool {
+        unsafe { mpz_divisible_p(&self.0, &other.0) != 0 }
+    }
+
+    /// TODO
+    pub fn divides(&self, other: &Mpz) -> bool {
+        other.is_multiple_of(self)
+    }
+
+    /// TODO
+    pub fn modulus(&self, modulo: &Mpz) -> Mpz {
+        unsafe {
+            if modulo.is_zero() {
+                panic!("divide by zero")
+            }
+
+            let mut res = Mpz::new();
+            mpz_mod(&mut res.0, &self.0, &modulo.0);
+            res
+        }
+    }
+
+    /// TODO
+    pub fn invert(&self, modulo: &Mpz) -> Option<Mpz> {
+        unsafe {
+            let mut res = Mpz::new();
+            if mpz_invert(&mut res.0, &self.0, &modulo.0) == 0 {
+                None
+            } else {
+                Some(res)
+            }
+        }
+    }
+
+    /// TODO
+    pub fn popcount(&self) -> usize {
+        unsafe { mpz_popcount(&self.0) as usize }
+    }
+
+    // TODO
+    pub fn pow(&self, exp: u32) -> Mpz {
+        unsafe {
+            let mut res = Mpz::new();
+            mpz_pow_ui(&mut res.0, &self.0, exp as c_ulong);
+            res
+        }
+    }
+
+    // TODO
+    pub fn powm(&self, exp: &Mpz, modulus: &Mpz) -> Mpz {
+        unsafe {
+            let mut res = Mpz::new();
+            mpz_powm(&mut res.0, &self.0, &exp.0, &modulus.0);
+            res
+        }
+    }
+
+    // TODO
+    // pub fn powm_sec(&self, exp: &Mpz, modulus: &Mpz) -> Mpz {
+    //     unsafe {
+    //         let mut res = Mpz::new();
+    //         mpz_powm_sec(&mut res.0, &self.0, &exp.0, &modulus.0);
+    //         res
+    //     }
+    // }
+
+    // TODO
+    pub fn ui_pow_ui(x: u32, y: u32) -> Mpz {
+        unsafe {
+            let mut res = Mpz::new();
+            mpz_ui_pow_ui(&mut res.0, x as c_ulong, y as c_ulong);
+            res
+        }
+    }
+
+    pub fn hamdist(&self, other: &Mpz) -> usize {
+        unsafe { mpz_hamdist(&self.0, &other.0) as usize }
+    }
+
+    pub fn setbit(&mut self, bit_index: usize) {
+        unsafe { mpz_setbit(&mut self.0, bit_index as c_ulong) }
+    }
+
+    pub fn clrbit(&mut self, bit_index: usize) {
+        unsafe { mpz_clrbit(&mut self.0, bit_index as c_ulong) }
+    }
+
+    pub fn combit(&mut self, bit_index: usize) {
+        unsafe { mpz_combit(&mut self.0, bit_index as c_ulong) }
+    }
+
+    pub fn tstbit(&self, bit_index: usize) -> bool {
+        unsafe { mpz_tstbit(&self.0, bit_index as c_ulong) == 1 }
+    }
+
+    pub fn root(&self, n: u32) -> Mpz {
+        assert!(self.0._mp_size >= 0);
+        unsafe {
+            let mut res = Mpz::new();
+            let _perfect_root = match mpz_root(&mut res.0, &self.0, n as c_ulong) {
+                0 => false,
+                _ => true,
+            };
+            // TODO: consider returning `_perfect_root`
+            res
+        }
+    }
+
+    pub fn sqrt(&self) -> Mpz {
+        assert!(self.0._mp_size >= 0);
+        unsafe {
+            let mut res = Mpz::new();
+            mpz_sqrt(&mut res.0, &self.0);
+            res
+        }
+    }
+
+    // TODO
+    // pub fn millerrabin(&self, reps: i32) -> i32 {
+    //     unsafe {
+    //         mpz_millerrabin(&self.0, reps as c_int)
+    //     }
+    // }
+
+    /// TODO
+    pub fn sign(&self) -> Sign {
+        let size = self.0._mp_size;
+        if size == 0 {
+            Sign::Zero
+        } else if size > 0 {
+            Sign::Positive
+        } else {
+            Sign::Negative
+        }
+    }
+
+    /// TODO
+    pub fn one() -> Mpz {
+        unsafe {
+            let mut mpz = uninit();
+            mpz_init_set_ui(&mut mpz, 1);
+            Self(mpz)
+        }
+    }
+
+    /// TODO
+    pub fn zero() -> Mpz {
+        Mpz::new()
+    }
+
+    /// TODO
+    pub fn is_zero(&self) -> bool {
+        self.0._mp_size == 0
+    }
+}
+
+impl Default for Mpz {
+    fn default() -> Self {
+        Self::new()
+    }
+}
 
 #[cfg(test)]
 mod test {
     use super::*;
 
     #[test]
-    fn new() {}
+    fn new() {
+        let _ = Mpz::new();
+    }
 }
