@@ -3,15 +3,81 @@
         </a><h2 class="location"></h2>
     </nav>
     <nav class="sidebar"><a class="sidebar-logo" href="../../mpir/index.html"><div class="logo-container"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></div>
-        </a></nav><main><div class="width-limiter"><div class="sub-container"><a class="sub-logo-container" href="../../mpir/index.html"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></a><nav class="sub"><div class="theme-picker hidden"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu" title="themes"><img width="22" height="22" alt="Pick another theme!" src="../../brush.svg"></button><div id="theme-choices" role="menu"></div></div><form class="search-form"><div class="search-container"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><button type="button" id="help-button" title="help">?</button><a id="settings-menu" href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../wheel.svg"></a></div></form></nav></div><section id="main-content" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">1</span>
-<span id="2">2</span>
-<span id="3">3</span>
-<span id="4">4</span>
-<span id="5">5</span>
-<span id="6">6</span>
-<span id="7">7</span>
-<span id="8">8</span>
-</pre><pre class="rust"><code><span class="kw">extern</span> <span class="kw">crate</span> <span class="ident">core</span>;
+        </a></nav><main><div class="width-limiter"><div class="sub-container"><a class="sub-logo-container" href="../../mpir/index.html"><img class="rust-logo" src="../../rust-logo.svg" alt="logo"></a><nav class="sub"><div class="theme-picker hidden"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu" title="themes"><img width="22" height="22" alt="Pick another theme!" src="../../brush.svg"></button><div id="theme-choices" role="menu"></div></div><form class="search-form"><div class="search-container"><span></span><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><button type="button" id="help-button" title="help">?</button><a id="settings-menu" href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../wheel.svg"></a></div></form></nav></div><section id="main-content" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1"> 1</span>
+<span id="2"> 2</span>
+<span id="3"> 3</span>
+<span id="4"> 4</span>
+<span id="5"> 5</span>
+<span id="6"> 6</span>
+<span id="7"> 7</span>
+<span id="8"> 8</span>
+<span id="9"> 9</span>
+<span id="10">10</span>
+<span id="11">11</span>
+<span id="12">12</span>
+<span id="13">13</span>
+<span id="14">14</span>
+<span id="15">15</span>
+<span id="16">16</span>
+<span id="17">17</span>
+<span id="18">18</span>
+<span id="19">19</span>
+<span id="20">20</span>
+<span id="21">21</span>
+<span id="22">22</span>
+<span id="23">23</span>
+<span id="24">24</span>
+<span id="25">25</span>
+<span id="26">26</span>
+<span id="27">27</span>
+<span id="28">28</span>
+<span id="29">29</span>
+<span id="30">30</span>
+<span id="31">31</span>
+<span id="32">32</span>
+<span id="33">33</span>
+<span id="34">34</span>
+<span id="35">35</span>
+<span id="36">36</span>
+<span id="37">37</span>
+<span id="38">38</span>
+<span id="39">39</span>
+<span id="40">40</span>
+<span id="41">41</span>
+</pre><pre class="rust"><code><span class="doccomment">//! # mpir-rs</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! Rust bindings for the Multiple Precision Integers and Rationals library (MPIR)</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! ### [Documentation](https://manoadamro.github.io/mpir-rs/)</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! ---</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! ## Install</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! (coming soon)</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! ```toml</span>
+<span class="doccomment">//! mpir = &quot;0.1.0&quot;</span>
+<span class="doccomment">//! ```</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! ---</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! ## Modules</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! | Module | Title                  | Prefix | FFI  | Wrapper |</span>
+<span class="doccomment">//! |--------|------------------------|--------|------|---------|</span>
+<span class="doccomment">//! | mpz    | Integer Numbers        | `mpz_` | WIP  | WIP     |</span>
+<span class="doccomment">//! | mpf    | Floating-point Numbers | `mpf_` | TODO | TODO    |</span>
+<span class="doccomment">//! | mpq    | Rational Numbers       | `mpq_` | TODO | TODO    |</span>
+<span class="doccomment">//! | gmp    | Random Numbers         | `gmp_` | TODO | TODO    |</span>
+<span class="doccomment">//! | mpn    | Low-level Functions    | `mpn_` | TODO | TODO    |</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! ## Links</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! - [MPIR-RS - Documentation](https://manoadamro.github.io/mpir-rs/)</span>
+<span class="doccomment">//! - [MPIR 3.0.0 - C documentation](https://mpir.org/mpir-3.0.0.pdf)</span>
+<span class="kw">extern</span> <span class="kw">crate</span> <span class="ident">core</span>;
 
 <span class="kw">pub</span> <span class="kw">mod</span> <span class="ident">ctype</span>;
 <span class="kw">pub</span> <span class="kw">mod</span> <span class="ident">mpz</span>;
