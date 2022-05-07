@@ -2,7 +2,6 @@
 //!
 //! [MPIR 3.0.0 - C documentation](https://mpir.org/mpir-3.0.0.pdf)
 
-use core::ffi::c_size_t;
 use std::mem::{size_of, uninitialized};
 
 use crate::ctype::{
@@ -939,7 +938,7 @@ extern "C" {
 
     /// Return the size of op measured in number of limbs. If op is zero, the returned value will be
     /// zero.
-    fn mpz_size (op: mpz_srcptr) -> c_size_t;
+    fn mpz_size (op: mpz_srcptr) -> size_t;
 
     // TODO mpz_limbs_read
     // /// Return a pointer to the limb array representing the absolute value of x.
