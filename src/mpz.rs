@@ -2,12 +2,11 @@
 //!
 //! [MPIR 3.0.0 - C documentation](https://mpir.org/mpir-3.0.0.pdf)
 
-use core::ffi::c_size_t;
 use std::mem::{size_of, uninitialized};
 
 use crate::ctype::{
     c_char, c_double, c_int, c_long, c_ulong, c_void, mp_bitcnt_t, mpz_ptr, mpz_srcptr, mpz_struct,
-    size_t, CString, mp_limb_t
+    size_t, CString, mp_limb_t, c_size_t
 };
 
 use crate::Sign;
