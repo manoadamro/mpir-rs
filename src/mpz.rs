@@ -59,10 +59,10 @@ extern "C" {
     fn mpz_set(rop: mpz_ptr, op: mpz_ptr);
 
     /// Set the value of rop from op.
-    fn mpz_set_ui (rop: mpz_ptr, op: c_ulong);
+    fn mpz_set_ui(rop: mpz_ptr, op: c_ulong);
 
     /// Set the value of rop from op.
-    fn mpz_set_si (rop: mpz_ptr, op: c_ulong);
+    fn mpz_set_si(rop: mpz_ptr, op: c_ulong);
 
     /// Set the value of rop from a C double.
     fn mpz_set_d(rop: mpz_ptr, op: c_double);
@@ -402,7 +402,7 @@ extern "C" {
     /// A negative exp is supported in mpz_powm if an inverse base−1 mod mod exists (see mpz_
     /// invert in Section 5.9 [Number Theoretic Functions], page 36). If an inverse doesn’t exist
     /// then a divide by zero is raised.
-    fn mpz_powm (rop: mpz_ptr, base: mpz_srcptr, exp: mpz_srcptr, m: mpz_srcptr);
+    fn mpz_powm(rop: mpz_ptr, base: mpz_srcptr, exp: mpz_srcptr, m: mpz_srcptr);
 
     /// Set rop to base^exp mod mod.
     ///
@@ -417,7 +417,6 @@ extern "C" {
     /// Set rop to base^exp. The case 00 yields 1.
     fn mpz_ui_pow_ui(rop: mpz_ptr, base: c_ulong, exp: c_ulong);
 
-
     // ---------------------------------------------------------------------------------------------
     // Root Extraction Functions
 
@@ -425,7 +424,7 @@ extern "C" {
     ///
     /// √opc, the truncated integer part of the nth root of op. Return non-zero if the
     /// computation was exact, i.e., if op is rop to the nth power.
-    fn mpz_nthroot (rop: mpz_ptr, op: mpz_srcptr, n: c_ulong);
+    fn mpz_nthroot(rop: mpz_ptr, op: mpz_srcptr, n: c_ulong);
 
     /// Set rop to b n
     ///
@@ -436,7 +435,7 @@ extern "C" {
     ///
     /// √uc, the truncated integer part of the nth root of u. Set rem to the remainder,
     /// (u − rootn).
-    fn mpz_rootrem (rop: mpz_ptr, rem: mpz_srcptr, u: mpz_srcptr, n: c_ulong);
+    fn mpz_rootrem(rop: mpz_ptr, rem: mpz_srcptr, u: mpz_srcptr, n: c_ulong);
 
     /// Set rop to b√opc, the truncated integer part of the square root of op.
     fn mpz_sqrt(rop: mpz_ptr, op: mpz_srcptr);
@@ -452,11 +451,11 @@ extern "C" {
     ///
     /// Under this definition both 0 and 1 are considered to be perfect powers. Negative values of
     /// op are accepted, but of course can only be odd perfect powers.
-    fn mpz_perfect_power_p (op: mpz_srcptr) -> c_int;
+    fn mpz_perfect_power_p(op: mpz_srcptr) -> c_int;
 
     /// Return non-zero if op is a perfect square, i.e., if the square root of op is an integer. Under
     /// this definition both 0 and 1 are considered to be perfect squares.
-    fn mpz_perfect_square_p (op: mpz_srcptr) -> c_int;
+    fn mpz_perfect_square_p(op: mpz_srcptr) -> c_int;
 
     // ---------------------------------------------------------------------------------------------
     // Number Theoretic Functions
@@ -949,7 +948,6 @@ extern "C" {
     // /// This function is obsolete. It will disappear from future MPIR releases.
     // fn mpz_array_init(mpz t integer_array, size t array_size, mp size t fixed_num_bits);
 
-
     // TODO _mpz_realloc
     // /// Change the space for integer to new alloc limbs. The value in integer is preserved if it fits,
     // /// or is set to 0 if not. The return value is not useful to applications and should be ignored.
@@ -1018,7 +1016,6 @@ extern "C" {
     // /// mpz_add (x, x, mpz_roinit_n (tmp, y, 3));
     // /// }
     // mpz_srcptr mpz_roinit_n (mpz t x, const mp limb t *xp, mp size t xs);
-
 
     // TODO MPZ_ROINIT_N
     // /// This macro expands to an initializer which can be assigned to an mpz t variable. The
