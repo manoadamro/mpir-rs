@@ -32,6 +32,7 @@
 extern crate core;
 
 pub mod ctype;
+pub mod error;
 pub mod mpz;
 pub mod sign;
 
