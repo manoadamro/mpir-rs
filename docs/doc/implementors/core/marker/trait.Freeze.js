@@ -1,0 +1,3 @@
+(function() {var implementors = {};
+implementors["mpir"] = [{"text":"impl Freeze for <a class=\"struct\" href=\"mpir/ctype/struct.mpz_struct.html\" title=\"struct mpir::ctype::mpz_struct\">mpz_struct</a>","synthetic":true,"types":["mpir::ctype::mpz_struct"]},{"text":"impl Freeze for <a class=\"struct\" href=\"mpir/mpz/struct.Mpz.html\" title=\"struct mpir::mpz::Mpz\">Mpz</a>","synthetic":true,"types":["mpir::mpz::Mpz"]},{"text":"impl Freeze for <a class=\"enum\" href=\"mpir/sign/enum.Sign.html\" title=\"enum mpir::sign::Sign\">Sign</a>","synthetic":true,"types":["mpir::sign::Sign"]}];
+if (window.register_implementors) {window.register_implementors(implementors);} else {window.pending_implementors = implementors;}})()
