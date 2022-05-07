@@ -1,6 +1,6 @@
 //! Rust bindings for the Multiple Precision Integers and Rationals library (MPIR)
 //!
-//! ### [Documentation](https://manoadamro.github.io/mpir-rs/)
+//! ## [Documentation](https://manoadamro.github.io/mpir-rs/)
 //!
 //! ---
 //!
