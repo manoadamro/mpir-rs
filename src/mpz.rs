@@ -1,12 +1,15 @@
+//! Unbounded Integer
+//!
 //! [MPIR 3.0.0 - C documentation](https://mpir.org/mpir-3.0.0.pdf)
-#![allow(dead_code)]
 
+use core::ffi::c_size_t;
 use std::mem::{size_of, uninitialized};
 
 use crate::ctype::{
     c_char, c_double, c_int, c_long, c_ulong, c_void, mp_bitcnt_t, mpz_ptr, mpz_srcptr, mpz_struct,
-    size_t, CString,
+    size_t, CString, mp_limb_t
 };
+
 use crate::Sign;
 
 #[link(name = "mpir", kind = "static")]
@@ -30,25 +33,25 @@ extern "C" {
     As you can see, you can store new values any number of times, once an object is initialized */
 
     /// Initialize integer, and set its value to 0
-    fn mpz_init(x: mpz_ptr);
+    pub fn mpz_init(x: mpz_ptr);
 
     /// Initialize integer, with space for n bits, and set its value to 0.
     ///
     /// n is only the initial space, integer will grow automatically in the normal way, if necessary,
     /// for subsequent values stored. mpz_init2 makes it possible to avoid such reallocations if a
     /// maximum size is known in advance
-    fn mpz_init2(x: mpz_ptr, n: mp_bitcnt_t);
+    pub fn mpz_init2(x: mpz_ptr, n: mp_bitcnt_t);
 
     /// Free the space occupied by integer. Call this function for all mpz_t variables when you are
     /// done with them.
-    fn mpz_clear(x: mpz_ptr);
+    pub fn mpz_clear(x: mpz_ptr);
 
     /// Change the space allocated for integer to n bits. The value in integer is preserved if it fits,
     /// or is set to 0 if not.
     ///
     /// This function can be used to increase the space for a variable in order to avoid repeated
     /// automatic reallocations, or to decrease it to give memory back to the heap
-    fn mpz_realloc2(x: mpz_ptr, n: mp_bitcnt_t);
+    pub fn mpz_realloc2(x: mpz_ptr, n: mp_bitcnt_t);
 
     // ---------------------------------------------------------------------------------------------
     // Assignment Functions
@@ -56,24 +59,24 @@ extern "C" {
     /* These functions assign new values to already initialized integers */
 
     /// Set the value of rop from another mpz.
-    fn mpz_set(rop: mpz_ptr, op: mpz_ptr);
+    pub fn mpz_set(rop: mpz_ptr, op: mpz_ptr);
 
     /// Set the value of rop from op.
-    fn mpz_set_ui(rop: mpz_ptr, op: c_ulong);
+    pub fn mpz_set_ui(rop: mpz_ptr, op: c_ulong);
 
     /// Set the value of rop from op.
-    fn mpz_set_si(rop: mpz_ptr, op: c_ulong);
+    pub fn mpz_set_si(rop: mpz_ptr, op: c_ulong);
 
     /// Set the value of rop from a C double.
-    fn mpz_set_d(rop: mpz_ptr, op: c_double);
+    pub fn mpz_set_d(rop: mpz_ptr, op: c_double);
 
     // TODO : when rational is added
     // /// Set the value of rop from op.
-    // fn mpz_set_q (rop: mpz_ptr, op: );
+    // pub fn mpz_set_q (rop: mpz_ptr, op: );
 
     // TODO : when float is added
     // /// Set the value of rop from op.
-    // fn mpz_set_f (rop: mpz_ptr, op: mpf_ptr);
+    // pub fn mpz_set_f (rop: mpz_ptr, op: mpf_ptr);
 
     /// Set the value of rop from str, a null-terminated C string in base base. White space is allowed
     /// in the string, and is simply ignored.
@@ -86,10 +89,10 @@ extern "C" {
     ///
     /// This function returns 0 if the entire string is a valid number in base base. Otherwise it returns
     /// −1
-    fn mpz_set_str(rop: mpz_ptr, s: *const c_char, base: c_int) -> c_int;
+    pub fn mpz_set_str(rop: mpz_ptr, s: *const c_char, base: c_int) -> c_int;
 
     /// Swap the values rop1 and rop2 efficiently
-    fn mpz_swap(rop1: mpz_ptr, rop2: mpz_ptr);
+    pub fn mpz_swap(rop1: mpz_ptr, rop2: mpz_ptr);
 
     // ---------------------------------------------------------------------------------------------
     // Combined Initialization and Assignment Functions
@@ -113,22 +116,22 @@ extern "C" {
     and-set function on a variable already initialized! */
 
     /// Initialize rop with limb space and set the initial numeric value from another mpz.
-    fn mpz_init_set(rop: mpz_ptr, op: mpz_ptr);
+    pub fn mpz_init_set(rop: mpz_ptr, op: mpz_ptr);
 
     /// Set the value of rop from op.
-    fn mpz_init_set_ui(rop: mpz_ptr, op: c_ulong);
+    pub fn mpz_init_set_ui(rop: mpz_ptr, op: c_ulong);
 
     /// Set the value of rop from op.
-    fn mpz_init_set_si(rop: mpz_ptr, op: c_ulong);
+    pub fn mpz_init_set_si(rop: mpz_ptr, op: c_ulong);
 
     /// Initialize rop with limb space and set the initial numeric value from a C double.
-    fn mpz_init_set_d(rop: mpz_ptr, op: c_double);
+    pub fn mpz_init_set_d(rop: mpz_ptr, op: c_double);
 
     /// Initialize rop and set its value like mpz_set_str (see its documentation above for details).
     ///
     /// If the string is a correct base base number, the function returns 0; if an error occurs it returns
     /// −1. rop is initialized even if an error occurs. (I.e., you have to call mpz_clear for it.)
-    fn mpz_init_set_str(rop: mpz_ptr, s: *const c_char, base: c_int) -> c_int;
+    pub fn mpz_init_set_str(rop: mpz_ptr, s: *const c_char, base: c_int) -> c_int;
 
     // Conversion Functions
 
@@ -138,31 +141,30 @@ extern "C" {
     ///
     /// If op is too big to fit an mpir_ui then just the least significant bits that do fit are returned.
     /// The sign of op is ignored, only the absolute value is used.
-    fn mpz_get_ui(op: mpz_srcptr) -> c_ulong;
+    pub fn mpz_get_ui(op: mpz_srcptr) -> c_ulong;
 
     /// If op fits into a mpir_si return the value of op. Otherwise return the least significant part
     /// of op, with the same sign as op.
     ///
     /// If op is too big to fit in a mpir_si, the returned result is probably not very useful. To find
     /// out if the value will fit, use the function mpz_fits_slong_p.
-    fn mpz_get_si(op: mpz_srcptr) -> c_ulong;
+    pub fn mpz_get_si(op: mpz_srcptr) -> c_ulong;
 
     /// Convert op to a double, truncating if necessary (ie. rounding towards zero).
     ///
     /// If the exponent from the conversion is too big, the result is system dependent. An infinity is
     /// returned where available. A hardware overflow trap may or may not occur.
-    fn mpz_get_d(op: mpz_srcptr) -> c_double;
+    pub fn mpz_get_d(op: mpz_srcptr) -> c_double;
 
-    // TODO
-    // /// Convert op to a double, truncating if necessary (ie. rounding towards zero), and returning
-    // /// the exponent separately.
-    // ///
-    // /// The return value is in the range 0.5 ≤ |d| < 1 and the exponent is stored to *exp. d ∗ 2exp is
-    // /// the (truncated) op value. If op is zero, the return is 0.0 and 0 is stored to *exp.
-    // ///
-    // /// This is similar to the standard C frexp function (see Section “Normalization Functions” in
-    // /// The GNU C Library Reference Manual).
-    fn mpz_get_d_2exp(exp: mpz_ptr, op: mpz_srcptr);
+    /// Convert op to a double, truncating if necessary (ie. rounding towards zero), and returning
+    /// the exponent separately.
+    ///
+    /// The return value is in the range 0.5 ≤ |d| < 1 and the exponent is stored to *exp. d ∗ 2exp is
+    /// the (truncated) op value. If op is zero, the return is 0.0 and 0 is stored to *exp.
+    ///
+    /// This is similar to the standard C frexp function (see Section “Normalization Functions” in
+    /// The GNU C Library Reference Manual).
+    pub fn mpz_get_d_2exp(exp: mpz_ptr, op: mpz_srcptr);
 
     /// Convert op to a string of digits in base base. The base may vary from 2 to 36 or from −2 to
     /// −36.
@@ -180,55 +182,55 @@ extern "C" {
     /// null-terminator.
     ///
     /// A pointer to the result string is returned, being either the allocated block, or the given str.
-    fn mpz_get_str(s: *mut c_char, base: c_int, op: mpz_srcptr) -> *mut c_char;
+    pub fn mpz_get_str(s: *mut c_char, base: c_int, op: mpz_srcptr) -> *mut c_char;
 
     // ---------------------------------------------------------------------------------------------
     // Arithmetic Functions
 
     /// Set rop to op1 + op2.
-    fn mpz_add(rop: mpz_ptr, op1: mpz_srcptr, op2: mpz_srcptr);
+    pub fn mpz_add(rop: mpz_ptr, op1: mpz_srcptr, op2: mpz_srcptr);
 
     /// Set rop to op1 + op2.
-    fn mpz_add_ui(rop: mpz_ptr, op1: mpz_srcptr, op2: c_ulong) -> c_int;
+    pub fn mpz_add_ui(rop: mpz_ptr, op1: mpz_srcptr, op2: c_ulong) -> c_int;
 
     /// Set rop to op1 − op2.
-    fn mpz_sub(rop: mpz_ptr, op1: mpz_srcptr, op2: mpz_srcptr);
+    pub fn mpz_sub(rop: mpz_ptr, op1: mpz_srcptr, op2: mpz_srcptr);
 
     /// Set rop to op1 − op2.
-    fn mpz_sub_ui(rop: mpz_ptr, op1: mpz_srcptr, op2: c_ulong);
+    pub fn mpz_sub_ui(rop: mpz_ptr, op1: mpz_srcptr, op2: c_ulong);
 
     /// Set rop to op1 − op2.
-    fn mpz_ui_sub(rop: mpz_ptr, op1: c_ulong, op2: mpz_srcptr);
+    pub fn mpz_ui_sub(rop: mpz_ptr, op1: c_ulong, op2: mpz_srcptr);
 
     /// Set rop to op1 × op2.
-    fn mpz_mul(rop: mpz_ptr, op1: mpz_srcptr, op2: mpz_srcptr);
+    pub fn mpz_mul(rop: mpz_ptr, op1: mpz_srcptr, op2: mpz_srcptr);
 
     /// Set rop to op1 × op2.
-    fn mpz_mul_si(rop: mpz_ptr, op1: mpz_srcptr, op2: c_long);
+    pub fn mpz_mul_si(rop: mpz_ptr, op1: mpz_srcptr, op2: c_long);
 
     /// Set rop to op1 × op2.
-    fn mpz_mul_ui(rop: mpz_ptr, op1: mpz_srcptr, op2: c_ulong);
+    pub fn mpz_mul_ui(rop: mpz_ptr, op1: mpz_srcptr, op2: c_ulong);
 
     /// Set rop to rop + op1 × op2.
-    fn mpz_addmul(rop: mpz_ptr, op1: mpz_srcptr, op2: mpz_srcptr);
+    pub fn mpz_addmul(rop: mpz_ptr, op1: mpz_srcptr, op2: mpz_srcptr);
 
     /// Set rop to rop + op1 × op2.
-    fn mpz_addmul_ui(rop: mpz_ptr, op1: mpz_srcptr, op2: c_ulong);
+    pub fn mpz_addmul_ui(rop: mpz_ptr, op1: mpz_srcptr, op2: c_ulong);
 
     /// Set rop to rop − op1 × op2.
-    fn mpz_submul(rop: mpz_ptr, op1: mpz_srcptr, op2: mpz_srcptr);
+    pub fn mpz_submul(rop: mpz_ptr, op1: mpz_srcptr, op2: mpz_srcptr);
 
     /// Set rop to rop − op1 × op2.
-    fn mpz_submul_ui(rop: mpz_ptr, op1: mpz_srcptr, op2: c_ulong);
+    pub fn mpz_submul_ui(rop: mpz_ptr, op1: mpz_srcptr, op2: c_ulong);
 
     /// Set rop to op1 × 2op2. This operation can also be defined as a left shift by op2 bits.
-    fn mpz_mul_2exp(rop: mpz_ptr, op1: mpz_srcptr, op2: mp_bitcnt_t);
+    pub fn mpz_mul_2exp(rop: mpz_ptr, op1: mpz_srcptr, op2: mp_bitcnt_t);
 
     /// Set rop to −op.
-    fn mpz_neg(rop: mpz_ptr, op: mpz_srcptr);
+    pub fn mpz_neg(rop: mpz_ptr, op: mpz_srcptr);
 
     /// Set rop to the absolute value of op.
-    fn mpz_abs(rop: mpz_ptr, op: mpz_srcptr);
+    pub fn mpz_abs(rop: mpz_ptr, op: mpz_srcptr);
 
     // ---------------------------------------------------------------------------------------------
     // Division Functions
@@ -269,106 +271,106 @@ extern "C" {
     complement the same as the bitwise logical functions do, whereas mpz_tdiv_q_2exp effec-
     tively treats n as sign and magnitude. */
 
-    fn mpz_cdiv_q(rop: mpz_ptr, n: mpz_srcptr, d: c_ulong);
+    pub fn mpz_cdiv_q(rop: mpz_ptr, n: mpz_srcptr, d: c_ulong);
 
-    fn mpz_cdiv_r(rop: mpz_ptr, n: mpz_srcptr, d: c_ulong);
+    pub fn mpz_cdiv_r(rop: mpz_ptr, n: mpz_srcptr, d: c_ulong);
 
-    fn mpz_cdiv_qr(rop: mpz_ptr, r: mpz_ptr, n: mpz_srcptr, d: c_ulong);
+    pub fn mpz_cdiv_qr(rop: mpz_ptr, r: mpz_ptr, n: mpz_srcptr, d: c_ulong);
 
-    fn mpz_cdiv_q_ui(rop: mpz_ptr, n: mpz_srcptr, d: c_ulong) -> c_ulong;
+    pub fn mpz_cdiv_q_ui(rop: mpz_ptr, n: mpz_srcptr, d: c_ulong) -> c_ulong;
 
-    fn mpz_cdiv_r_ui(rop: mpz_ptr, n: mpz_srcptr, d: c_ulong) -> c_ulong;
+    pub fn mpz_cdiv_r_ui(rop: mpz_ptr, n: mpz_srcptr, d: c_ulong) -> c_ulong;
 
-    fn mpz_cdiv_qr_ui(rop: mpz_ptr, r: mpz_ptr, n: mpz_srcptr, d: c_ulong) -> c_ulong;
+    pub fn mpz_cdiv_qr_ui(rop: mpz_ptr, r: mpz_ptr, n: mpz_srcptr, d: c_ulong) -> c_ulong;
 
-    fn mpz_cdiv_ui(rop: mpz_ptr, d: c_ulong) -> c_ulong;
+    pub fn mpz_cdiv_ui(rop: mpz_ptr, d: c_ulong) -> c_ulong;
 
-    fn mpz_cdiv_q_2exp(rop: mpz_ptr, n: mpz_srcptr, b: mp_bitcnt_t);
+    pub fn mpz_cdiv_q_2exp(rop: mpz_ptr, n: mpz_srcptr, b: mp_bitcnt_t);
 
-    fn mpz_cdiv_r_2exp(rop: mpz_ptr, n: mpz_srcptr, b: mp_bitcnt_t);
+    pub fn mpz_cdiv_r_2exp(rop: mpz_ptr, n: mpz_srcptr, b: mp_bitcnt_t);
 
-    fn mpz_fdiv_q(rop: mpz_ptr, n: mpz_srcptr, d: mpz_srcptr);
+    pub fn mpz_fdiv_q(rop: mpz_ptr, n: mpz_srcptr, d: mpz_srcptr);
 
-    fn mpz_fdiv_r(rop: mpz_ptr, n: mpz_srcptr, d: mpz_srcptr);
+    pub fn mpz_fdiv_r(rop: mpz_ptr, n: mpz_srcptr, d: mpz_srcptr);
 
-    fn mpz_fdiv_qr(rop: mpz_ptr, r: mpz_ptr, n: mpz_srcptr, d: mpz_srcptr);
+    pub fn mpz_fdiv_qr(rop: mpz_ptr, r: mpz_ptr, n: mpz_srcptr, d: mpz_srcptr);
 
-    fn mpz_fdiv_q_ui(rop: mpz_ptr, n: mpz_srcptr, d: c_ulong) -> c_ulong;
+    pub fn mpz_fdiv_q_ui(rop: mpz_ptr, n: mpz_srcptr, d: c_ulong) -> c_ulong;
 
-    fn mpz_fdiv_r_ui(rop: mpz_ptr, n: mpz_srcptr, d: c_ulong) -> c_ulong;
+    pub fn mpz_fdiv_r_ui(rop: mpz_ptr, n: mpz_srcptr, d: c_ulong) -> c_ulong;
 
-    fn mpz_fdiv_qr_ui(rop: mpz_ptr, r: mpz_srcptr, n: mpz_srcptr, d: c_ulong) -> c_ulong;
+    pub fn mpz_fdiv_qr_ui(rop: mpz_ptr, r: mpz_srcptr, n: mpz_srcptr, d: c_ulong) -> c_ulong;
 
-    fn mpz_fdiv_ui(rop: mpz_ptr, d: c_ulong) -> c_ulong;
+    pub fn mpz_fdiv_ui(rop: mpz_ptr, d: c_ulong) -> c_ulong;
 
-    fn mpz_fdiv_q_2exp(rop: mpz_ptr, n: mpz_srcptr, b: mp_bitcnt_t);
+    pub fn mpz_fdiv_q_2exp(rop: mpz_ptr, n: mpz_srcptr, b: mp_bitcnt_t);
 
-    fn mpz_fdiv_r_2exp(rop: mpz_ptr, n: mpz_srcptr, b: mp_bitcnt_t);
+    pub fn mpz_fdiv_r_2exp(rop: mpz_ptr, n: mpz_srcptr, b: mp_bitcnt_t);
 
-    fn mpz_tdiv_q(rop: mpz_ptr, n: mpz_srcptr, d: mpz_srcptr);
+    pub fn mpz_tdiv_q(rop: mpz_ptr, n: mpz_srcptr, d: mpz_srcptr);
 
-    fn mpz_tdiv_r(rop: mpz_ptr, n: mpz_srcptr, d: mpz_srcptr);
+    pub fn mpz_tdiv_r(rop: mpz_ptr, n: mpz_srcptr, d: mpz_srcptr);
 
-    fn mpz_tdiv_qr(rop: mpz_ptr, r: mpz_srcptr, n: mpz_srcptr, d: mpz_srcptr);
+    pub fn mpz_tdiv_qr(rop: mpz_ptr, r: mpz_srcptr, n: mpz_srcptr, d: mpz_srcptr);
 
-    fn mpz_tdiv_q_ui(rop: mpz_ptr, n: mpz_srcptr, d: c_ulong) -> c_ulong;
+    pub fn mpz_tdiv_q_ui(rop: mpz_ptr, n: mpz_srcptr, d: c_ulong) -> c_ulong;
 
-    fn mpz_tdiv_r_ui(rop: mpz_ptr, n: mpz_srcptr, d: c_ulong) -> c_ulong;
+    pub fn mpz_tdiv_r_ui(rop: mpz_ptr, n: mpz_srcptr, d: c_ulong) -> c_ulong;
 
-    fn mpz_tdiv_qr_ui(rop: mpz_ptr, r: mpz_srcptr, n: mpz_srcptr, d: c_ulong) -> c_ulong;
+    pub fn mpz_tdiv_qr_ui(rop: mpz_ptr, r: mpz_srcptr, n: mpz_srcptr, d: c_ulong) -> c_ulong;
 
-    fn mpz_tdiv_ui(rop: mpz_ptr, d: c_ulong) -> c_ulong;
+    pub fn mpz_tdiv_ui(rop: mpz_ptr, d: c_ulong) -> c_ulong;
 
-    fn mpz_tdiv_q_2exp(q: mpz_ptr, n: mpz_srcptr, b: mp_bitcnt_t);
+    pub fn mpz_tdiv_q_2exp(q: mpz_ptr, n: mpz_srcptr, b: mp_bitcnt_t);
 
-    fn mpz_tdiv_r_2exp(r: mpz_ptr, n: mpz_srcptr, b: mp_bitcnt_t);
-
-    /// Set r to n mod d. The sign of the divisor is ignored; the result is always non-negative.
-    ///
-    /// mpz_mod_ui is identical to mpz_fdiv_r_ui above, returning the remainder as well as setting
-    /// r. See mpz_fdiv_ui above if only the return value is wanted.
-    fn mpz_mod(r: mpz_ptr, n: mpz_srcptr, d: mpz_srcptr);
+    pub fn mpz_tdiv_r_2exp(r: mpz_ptr, n: mpz_srcptr, b: mp_bitcnt_t);
 
     /// Set r to n mod d. The sign of the divisor is ignored; the result is always non-negative.
     ///
     /// mpz_mod_ui is identical to mpz_fdiv_r_ui above, returning the remainder as well as setting
     /// r. See mpz_fdiv_ui above if only the return value is wanted.
-    fn mpz_mod_ui(r: mpz_ptr, n: mpz_srcptr, d: mpz_srcptr) -> c_ulong;
+    pub fn mpz_mod(r: mpz_ptr, n: mpz_srcptr, d: mpz_srcptr);
+
+    /// Set r to n mod d. The sign of the divisor is ignored; the result is always non-negative.
+    ///
+    /// mpz_mod_ui is identical to mpz_fdiv_r_ui above, returning the remainder as well as setting
+    /// r. See mpz_fdiv_ui above if only the return value is wanted.
+    pub fn mpz_mod_ui(r: mpz_ptr, n: mpz_srcptr, d: mpz_srcptr) -> c_ulong;
 
     /// Set q to n/d. These functions produce correct results only when it is known in advance that
     /// d divides n.
     ///
     /// These routines are much faster than the other division functions, and are the best choice
     /// when exact division is known to occur, for example reducing a rational to lowest terms.
-    fn mpz_divexact(q: mpz_ptr, n: mpz_srcptr, d: mpz_srcptr);
+    pub fn mpz_divexact(q: mpz_ptr, n: mpz_srcptr, d: mpz_srcptr);
 
     /// Set q to n/d. These functions produce correct results only when it is known in advance that
     /// d divides n.
     ///
     /// These routines are much faster than the other division functions, and are the best choice
     /// when exact division is known to occur, for example reducing a rational to lowest terms.
-    fn mpz_divexact_ui(q: mpz_ptr, n: mpz_srcptr, d: c_ulong);
+    pub fn mpz_divexact_ui(q: mpz_ptr, n: mpz_srcptr, d: c_ulong);
 
     /// Return non-zero if n is exactly divisible by d, or in the case of mpz_divisible_2exp_p by 2b.
     ///
     /// n is divisible by d if there exists an integer q satisfying n = qd. Unlike the other division
     /// functions, d = 0 is accepted and following the rule it can be seen that only 0 is considered
     /// divisible by 0.
-    fn mpz_divisible_p(n: mpz_ptr, d: mpz_srcptr) -> c_int;
+    pub fn mpz_divisible_p(n: mpz_ptr, d: mpz_srcptr) -> c_int;
 
     /// Return non-zero if n is exactly divisible by d, or in the case of mpz_divisible_2exp_p by 2b.
     ///
     /// n is divisible by d if there exists an integer q satisfying n = qd. Unlike the other division
     /// functions, d = 0 is accepted and following the rule it can be seen that only 0 is considered
     /// divisible by 0.
-    fn mpz_divisible_ui_p(n: mpz_ptr, d: c_ulong) -> c_int;
+    pub fn mpz_divisible_ui_p(n: mpz_ptr, d: c_ulong) -> c_int;
 
     /// Return non-zero if n is exactly divisible by d, or in the case of mpz_divisible_2exp_p by 2b.
     ///
     /// n is divisible by d if there exists an integer q satisfying n = qd. Unlike the other division
     /// functions, d = 0 is accepted and following the rule it can be seen that only 0 is considered
     /// divisible by 0.
-    fn mpz_divisible_2exp_p(n: mpz_ptr, b: mp_bitcnt_t) -> c_int;
+    pub fn mpz_divisible_2exp_p(n: mpz_ptr, b: mp_bitcnt_t) -> c_int;
 
     /// Return non-zero if n is congruent to c modulo d, or in the case of mpz_congruent_2exp_p
     /// modulo 2b.
@@ -376,7 +378,7 @@ extern "C" {
     /// n is congruent to c mod d if there exists an integer q satisfying n = c + qd. Unlike the other
     /// division functions, d = 0 is accepted and following the rule it can be seen that n and c are
     /// considered congruent mod 0 only when exactly equal.
-    fn mpz_congruent_p(n: mpz_ptr, c: mpz_srcptr, d: mpz_srcptr) -> c_int;
+    pub fn mpz_congruent_p(n: mpz_ptr, c: mpz_srcptr, d: mpz_srcptr) -> c_int;
 
     /// Return non-zero if n is congruent to c modulo d, or in the case of mpz_congruent_2exp_p
     /// modulo 2b.
@@ -384,7 +386,7 @@ extern "C" {
     /// n is congruent to c mod d if there exists an integer q satisfying n = c + qd. Unlike the other
     /// division functions, d = 0 is accepted and following the rule it can be seen that n and c are
     /// considered congruent mod 0 only when exactly equal.
-    fn mpz_congruent_ui_p(n: mpz_ptr, c: c_ulong, d: c_ulong) -> c_int;
+    pub fn mpz_congruent_ui_p(n: mpz_ptr, c: c_ulong, d: c_ulong) -> c_int;
 
     /// Return non-zero if n is congruent to c modulo d, or in the case of mpz_congruent_2exp_p
     /// modulo 2b.
@@ -392,7 +394,7 @@ extern "C" {
     /// n is congruent to c mod d if there exists an integer q satisfying n = c + qd. Unlike the other
     /// division functions, d = 0 is accepted and following the rule it can be seen that n and c are
     /// considered congruent mod 0 only when exactly equal.
-    fn mpz_congruent_2exp_p(n: mpz_ptr, c: mpz_srcptr, b: mp_bitcnt_t) -> c_int;
+    pub fn mpz_congruent_2exp_p(n: mpz_ptr, c: mpz_srcptr, b: mp_bitcnt_t) -> c_int;
 
     // ---------------------------------------------------------------------------------------------
     // Exponentiation Functions
@@ -402,20 +404,20 @@ extern "C" {
     /// A negative exp is supported in mpz_powm if an inverse base−1 mod mod exists (see mpz_
     /// invert in Section 5.9 [Number Theoretic Functions], page 36). If an inverse doesn’t exist
     /// then a divide by zero is raised.
-    fn mpz_powm(rop: mpz_ptr, base: mpz_srcptr, exp: mpz_srcptr, m: mpz_srcptr);
+    pub fn mpz_powm(rop: mpz_ptr, base: mpz_srcptr, exp: mpz_srcptr, m: mpz_srcptr);
 
     /// Set rop to base^exp mod mod.
     ///
     /// A negative exp is supported in mpz_powm if an inverse base−1 mod mod exists (see mpz_
     /// invert in Section 5.9 [Number Theoretic Functions], page 36). If an inverse doesn’t exist
     /// then a divide by zero is raised.
-    fn mpz_powm_ui(rop: mpz_ptr, base: mpz_srcptr, exp: c_ulong, m: mpz_srcptr);
+    pub fn mpz_powm_ui(rop: mpz_ptr, base: mpz_srcptr, exp: c_ulong, m: mpz_srcptr);
 
     /// Set rop to base^exp. The case 00 yields 1.
-    fn mpz_pow_ui(rop: mpz_ptr, base: mpz_srcptr, exp: c_ulong);
+    pub fn mpz_pow_ui(rop: mpz_ptr, base: mpz_srcptr, exp: c_ulong);
 
     /// Set rop to base^exp. The case 00 yields 1.
-    fn mpz_ui_pow_ui(rop: mpz_ptr, base: c_ulong, exp: c_ulong);
+    pub fn mpz_ui_pow_ui(rop: mpz_ptr, base: c_ulong, exp: c_ulong);
 
     // ---------------------------------------------------------------------------------------------
     // Root Extraction Functions
@@ -424,38 +426,38 @@ extern "C" {
     ///
     /// √opc, the truncated integer part of the nth root of op. Return non-zero if the
     /// computation was exact, i.e., if op is rop to the nth power.
-    fn mpz_nthroot(rop: mpz_ptr, op: mpz_srcptr, n: c_ulong);
+    pub fn mpz_nthroot(rop: mpz_ptr, op: mpz_srcptr, n: c_ulong);
 
     /// Set rop to b n
     ///
     /// √opc, the truncated integer part of the nth root of op.
-    fn mpz_root(rop: mpz_ptr, op: mpz_srcptr, n: c_ulong) -> c_int;
+    pub fn mpz_root(rop: mpz_ptr, op: mpz_srcptr, n: c_ulong) -> c_int;
 
     /// Set root to b n
     ///
     /// √uc, the truncated integer part of the nth root of u. Set rem to the remainder,
     /// (u − rootn).
-    fn mpz_rootrem(rop: mpz_ptr, rem: mpz_srcptr, u: mpz_srcptr, n: c_ulong);
+    pub fn mpz_rootrem(rop: mpz_ptr, rem: mpz_srcptr, u: mpz_srcptr, n: c_ulong);
 
     /// Set rop to b√opc, the truncated integer part of the square root of op.
-    fn mpz_sqrt(rop: mpz_ptr, op: mpz_srcptr);
+    pub fn mpz_sqrt(rop: mpz_ptr, op: mpz_srcptr);
 
     /// Set rop1 to b√opc, like mpz_sqrt. Set rop2 to the remainder (op − rop12), which will be
     /// zero if op is a perfect square.
     ///
     /// If rop1 and rop2 are the same variable, the results are undefined.
-    fn mpz_sqrtrem(rop1: mpz_ptr, rop2: mpz_ptr, op: mpz_srcptr);
+    pub fn mpz_sqrtrem(rop1: mpz_ptr, rop2: mpz_ptr, op: mpz_srcptr);
 
     /// Return non-zero if op is a perfect power, i.e., if there exist integers a and b, with b > 1, such
     /// that op = ab.
     ///
     /// Under this definition both 0 and 1 are considered to be perfect powers. Negative values of
     /// op are accepted, but of course can only be odd perfect powers.
-    fn mpz_perfect_power_p(op: mpz_srcptr) -> c_int;
+    pub fn mpz_perfect_power_p(op: mpz_srcptr) -> c_int;
 
     /// Return non-zero if op is a perfect square, i.e., if the square root of op is an integer. Under
     /// this definition both 0 and 1 are considered to be perfect squares.
-    fn mpz_perfect_square_p(op: mpz_srcptr) -> c_int;
+    pub fn mpz_perfect_square_p(op: mpz_srcptr) -> c_int;
 
     // ---------------------------------------------------------------------------------------------
     // Number Theoretic Functions
@@ -470,7 +472,7 @@ extern "C" {
     // /// on n and so n has NO divisors <= div.Use 0 to inform the function that no trial division has
     // /// been done.
     // /// This function interface is preliminary and may change in the future.
-    // fn mpz_probable_prime_p (mpz t n, gmp randstate t state, int prob, mpir ui div) -> c_int;
+    // pub fn mpz_probable_prime_p (mpz t n, gmp randstate t state, int prob, mpir ui div) -> c_int;
 
     // TODO mpz_likely_prime_p
     // /// Determine whether n is likely a prime, i.e. you can consider it a prime for practical purposes.
@@ -482,7 +484,7 @@ extern "C" {
     // /// div can be used to inform the function that trial division up to div has already been performed
     // /// on n and so n has NO divisors <= div
     // /// This function interface is preliminary and may change in the future.
-    // fn mpz_likely_prime_p(mpz t n, gmp randstate t state, mpir ui div) -> c_int;
+    // pub fn mpz_likely_prime_p(mpz t n, gmp randstate t state, mpir ui div) -> c_int;
 
     // TODO mpz_next_prime_candidate
     // /// Set rop to the next candidate prime greater than op. Note that this function will occasionally
@@ -493,12 +495,12 @@ extern "C" {
     // ///
     // /// The variable state must be initialized by calling one of the gmp_randinit functions
     // /// (Section 9.1 [Random State Initialization], page 67) before invoking this function.
-    // fn mpz_next_prime_candidate(mpz t rop, mpz t op, gmp randstate t state);
+    // pub fn mpz_next_prime_candidate(mpz t rop, mpz t op, gmp randstate t state);
 
     // TODO mpz_gcd
     // /// Set rop to the greatest common divisor of op1 and op2. The result is always positive even if
     // /// one or both input operands are negative.
-    // fn mpz_gcd(mpz t rop, mpz t op1, mpz t op2);
+    // pub fn mpz_gcd(mpz t rop, mpz t op1, mpz t op2);
 
     // TODO mpz_gcd_ui
     // /// Compute the greatest common divisor of op1 and op2. If rop is not NULL, store the result
@@ -506,7 +508,7 @@ extern "C" {
     // /// If the result is small enough to fit in an mpir_ui, it is returned. If the result does not fit, 0
     // /// is returned, and the result is equal to the argument op1. Note that the result will always fit
     // /// if op2 is non-zero.
-    // fn mpz_gcd_ui (mpz t rop, mpz t op1, mpir ui op2) -> c_ulong;
+    // pub fn mpz_gcd_ui (mpz t rop, mpz t op1, mpir ui op2) -> c_ulong;
 
     // TODO mpz_gcdext
     // /// Set g to the greatest common divisor of a and b, and in addition set s and t to coefficients
@@ -518,34 +520,34 @@ extern "C" {
     // /// Otherwise, s = sgn(a) if b = 0 or |b| = 2g, and t = sgn(b) if a = 0 or |a| = 2g.
     // /// In all cases, s = 0 if and only if g = |b|, i.e., if b divides a or a = b = 0.
     // /// If t is NULL then that value is not computed.
-    // fn mpz_gcdext(mpz t g, mpz t s, mpz t t, const mpz t a, const mpz t b);
+    // pub fn mpz_gcdext(mpz t g, mpz t s, mpz t t, const mpz t a, const mpz t b);
 
     // TODO mpz_lcm
     // /// Set rop to the least common multiple of op1 and op2. rop is always positive, irrespective of
     // /// the signs of op1 and op2. rop will be zero if either op1 or op2 is zero.
-    // fn mpz_lcm(mpz t rop, mpz t op1, mpz t op2);
+    // pub fn mpz_lcm(mpz t rop, mpz t op1, mpz t op2);
 
     // TODO mpz_lcm_ui
     // /// Set rop to the least common multiple of op1 and op2. rop is always positive, irrespective of
     // /// the signs of op1 and op2. rop will be zero if either op1 or op2 is zero.
-    // fn mpz_lcm_ui (mpz t rop, mpz t op1, mpir ui op2);
+    // pub fn mpz_lcm_ui (mpz t rop, mpz t op1, mpir ui op2);
 
     // TODO mpz_invert
     // /// Compute the inverse of op1 modulo op2 and put the result in rop. If the inverse exists, the
     // /// return value is non-zero and rop will satisfy 0 ≤ rop < op2. If an inverse doesn’t exist the
     // /// return value is zero and rop is undefined.
-    // fn mpz_invert (mpz t rop, mpz t op1, mpz t op2) -> c_int;
+    // pub fn mpz_invert (mpz t rop, mpz t op1, mpz t op2) -> c_int;
 
     // TODO mpz_jacobi
     // /// Calculate the Jacobi symbol ( a b ).
     // /// This is defined only for b odd.
-    // fn mpz_jacobi (mpz t a, mpz t b) -> c_int;
+    // pub fn mpz_jacobi (mpz t a, mpz t b) -> c_int;
 
     // TODO mpz_legendre
     // /// Calculate the Legendre symbol ( a p ).
     // /// This is defined only for p an odd positive prime, and
     // /// for such p it’s identical to the Jacobi symbol.
-    // fn mpz_legendre (mpz t a, mpz t p) -> c_int;
+    // pub fn mpz_legendre (mpz t a, mpz t p) -> c_int;
 
     // TODO mpz_kronecker
     // /// Calculate the Jacobi symbol ( a b ) with the Kronecker extension ( a 2 ) = ( 2 a ) when a odd, or( a 2 ) = 0 when a even.
@@ -556,7 +558,7 @@ extern "C" {
     // /// For more information see Henri Cohen section 1.4.2 (see Appendix B [References], page 145),
     // /// or any number theory textbook. See also the example program demos/qcn.c which uses
     // /// mpz_kronecker_ui on the MPIR website.
-    // fn mpz_kronecker (mpz t a, mpz t b) -> c_int;
+    // pub fn mpz_kronecker (mpz t a, mpz t b) -> c_int;
 
     // TODO mpz_kronecker_si
     // /// Calculate the Jacobi symbol ( a b ) with the Kronecker extension ( a 2 ) = ( 2 a ) when a odd, or( a 2 ) = 0 when a even.
@@ -567,7 +569,7 @@ extern "C" {
     // /// For more information see Henri Cohen section 1.4.2 (see Appendix B [References], page 145),
     // /// or any number theory textbook. See also the example program demos/qcn.c which uses
     // /// mpz_kronecker_ui on the MPIR website.
-    // fn mpz_kronecker_si (mpz t a, mpir si b) -> c_int;
+    // pub fn mpz_kronecker_si (mpz t a, mpir si b) -> c_int;
 
     // TODO mpz_kronecker_ui
     // /// Calculate the Jacobi symbol ( a b ) with the Kronecker extension ( a 2 ) = ( 2 a ) when a odd, or( a 2 ) = 0 when a even.
@@ -578,7 +580,7 @@ extern "C" {
     // /// For more information see Henri Cohen section 1.4.2 (see Appendix B [References], page 145),
     // /// or any number theory textbook. See also the example program demos/qcn.c which uses
     // /// mpz_kronecker_ui on the MPIR website.
-    // fn mpz_kronecker_ui (mpz t a, mpir ui b) -> c_int;
+    // pub fn mpz_kronecker_ui (mpz t a, mpir ui b) -> c_int;
 
     // TODO mpz_si_kronecker
     // /// Calculate the Jacobi symbol ( a b ) with the Kronecker extension ( a 2 ) = ( 2 a ) when a odd, or( a 2 ) = 0 when a even.
@@ -589,7 +591,7 @@ extern "C" {
     // /// For more information see Henri Cohen section 1.4.2 (see Appendix B [References], page 145),
     // /// or any number theory textbook. See also the example program demos/qcn.c which uses
     // /// mpz_kronecker_ui on the MPIR website.
-    // fn mpz_si_kronecker (mpir si a, mpz t b) -> c_int;
+    // pub fn mpz_si_kronecker (mpir si a, mpz t b) -> c_int;
 
     // TODO mpz_ui_kronecker
     // /// Calculate the Jacobi symbol ( a b ) with the Kronecker extension ( a 2 ) = ( 2 a ) when a odd, or( a 2 ) = 0 when a even.
@@ -600,41 +602,41 @@ extern "C" {
     // /// For more information see Henri Cohen section 1.4.2 (see Appendix B [References], page 145),
     // /// or any number theory textbook. See also the example program demos/qcn.c which uses
     // /// mpz_kronecker_ui on the MPIR website.
-    // fn mpz_ui_kronecker (mpir ui a, mpz t b) -> c_int;
+    // pub fn mpz_ui_kronecker (mpir ui a, mpz t b) -> c_int;
 
     // TODO mpz_remove
     // /// Remove all occurrences of the factor f from op and store the result in rop. The return value
     // /// is how many such occurrences were removed.
-    // fn mpz_remove (mpz t rop, mpz t op, mpz t f) -> mp_bitcnt_t;
+    // pub fn mpz_remove (mpz t rop, mpz t op, mpz t f) -> mp_bitcnt_t;
 
     // TODO mpz_fac_ui
     // /// Set rop to the factorial of n: mpz_fac_ui computes the plain factorial n!, mpz_2fac_ui
     // /// computes the double-factorial n!!, and mpz_mfac_uiui the m-multi-factorial n!(m).
-    // fn mpz_fac_ui (mpz t rop, unsigned long int n);
+    // pub fn mpz_fac_ui (mpz t rop, unsigned long int n);
 
     // TODO mpz_2fac_ui
     // /// Set rop to the factorial of n: mpz_fac_ui computes the plain factorial n!, mpz_2fac_ui
     // /// computes the double-factorial n!!, and mpz_mfac_uiui the m-multi-factorial n!(m).
-    // fn mpz_2fac_ui (mpz t rop, unsigned long int n);
+    // pub fn mpz_2fac_ui (mpz t rop, unsigned long int n);
 
     // TODO mpz_mfac_uiui
     // /// Set rop to the factorial of n: mpz_fac_ui computes the plain factorial n!, mpz_2fac_ui
     // /// computes the double-factorial n!!, and mpz_mfac_uiui the m-multi-factorial n!(m).
-    // fn mpz_mfac_uiui (mpz t rop, unsigned long int n, unsigned long int m);
+    // pub fn mpz_mfac_uiui (mpz t rop, unsigned long int n, unsigned long int m);
 
     // TODO mpz_primorial_ui
     // /// Set rop to the primorial of n, i.e. the product of all positive prime numbers ≤ n.
-    // fn mpz_primorial_ui (mpz t rop, unsigned long int n);
+    // pub fn mpz_primorial_ui (mpz t rop, unsigned long int n);
 
     // TODO mpz_bin_ui
     // /// Compute the binomial coefficient ( n k ) and store the result in rop.
     // /// Negative values of n are supported by mpz_bin_ui, using the identity ( −n k ) = (−1)k ( n+k−1 k )
-    // fn mpz_bin_ui (mpz t rop, mpz t n, mpir ui k);
+    // pub fn mpz_bin_ui (mpz t rop, mpz t n, mpir ui k);
 
     // TODO mpz_bin_uiui
     // /// Compute the binomial coefficient ( n k ) and store the result in rop.
     // /// Negative values of n are supported by mpz_bin_ui, using the identity ( −n k ) = (−1)k ( n+k−1 k )
-    // fn mpz_bin_uiui (mpz t rop, mpir ui n, mpir ui k);
+    // pub fn mpz_bin_uiui (mpz t rop, mpir ui n, mpir ui k);
 
     // TODO mpz_fib_ui
     // /// mpz_fib_ui sets fn to to Fn, the n’th Fibonacci number. mpz_fib2_ui sets fn to Fn, and fnsub1 to Fn−1.
@@ -645,12 +647,12 @@ extern "C" {
     // fn mpz_fib_ui (mpz t fn, mpir ui n);
 
     // TODO mpz_fib2_ui
-    // /// mpz_fib_ui sets fn to to Fn, the n’th Fibonacci number. mpz_fib2_ui sets fn to Fn, and fnsub1 to Fn−1.
+    // /// mpz_fib_ui sets pub fn to to Fn, the n’th Fibonacci number. mpz_fib2_ui sets fn to Fn, and fnsub1 to Fn−1.
     // ///
     // /// These functions are designed for calculating isolated Fibonacci numbers. When a sequence of
     // /// values is wanted it’s best to start with mpz_fib2_ui and iterate the defining Fn+1 = Fn +Fn−1
     // /// or similar.
-    // fn mpz_fib2_ui (mpz t fn, mpz t fnsub1, mpir ui n);
+    // pub fn mpz_fib2_ui (mpz t fn, mpz t fnsub1, mpir ui n);
 
     // TODO mpz_lucnum_ui
     // /// mpz_lucnum_ui sets ln to to Ln, the n’th Lucas number. mpz_lucnum2_ui sets ln to Ln, and
@@ -662,7 +664,7 @@ extern "C" {
     // ///
     // /// The Fibonacci numbers and Lucas numbers are related sequences, so it’s never necessary
     // /// to call both mpz_fib2_ui and mpz_lucnum2_ui. The formulas for going from Fibonacci to
-    // fn mpz_lucnum_ui (mpz t ln, mpir ui n);
+    // pub fn mpz_lucnum_ui (mpz t ln, mpir ui n);
 
     // TODO mpz_lucnum2_ui
     // /// mpz_lucnum_ui sets ln to to Ln, the n’th Lucas number. mpz_lucnum2_ui sets ln to Ln, and
@@ -674,77 +676,59 @@ extern "C" {
     // ///
     // /// The Fibonacci numbers and Lucas numbers are related sequences, so it’s never necessary
     // /// to call both mpz_fib2_ui and mpz_lucnum2_ui. The formulas for going from Fibonacci to
-    // fn mpz_lucnum2_ui (mpz t ln, mpz t lnsub1, mpir ui n);
+    // pub fn mpz_lucnum2_ui (mpz t ln, mpz t lnsub1, mpir ui n);
 
     // ---------------------------------------------------------------------------------------------
     // Comparison Functions
 
-    // TODO mpz_cmp
-    // /// Compare op1 and op2. Return a positive value if op1 > op2, zero if op1 = op2, or a negative
-    // /// value if op1 < op2.
-    // ///
-    // /// mpz_cmp_ui and mpz_cmp_si are macros and will evaluate their arguments more than once.
-    // /// mpz_cmp_d can be called with an infinity, but results are undefined for a NaN.
-    // fn mpz_cmp (mpz t op1, mpz t op2) -> c_int;
+    /// Compare op1 and op2. Return a positive value if op1 > op2, zero if op1 = op2, or a negative
+    /// value if op1 < op2.
+    ///
+    /// mpz_cmp_ui and mpz_cmp_si are macros and will evaluate their arguments more than once.
+    /// mpz_cmp_d can be called with an infinity, but results are undefined for a NaN.
+    pub fn mpz_cmp (op1: mpz_srcptr, op2: mpz_srcptr) -> c_int;
 
-    // TODO mpz_cmp_d
-    // /// Compare op1 and op2. Return a positive value if op1 > op2, zero if op1 = op2, or a negative
-    // /// value if op1 < op2.
-    // ///
-    // /// mpz_cmp_ui and mpz_cmp_si are macros and will evaluate their arguments more than once.
-    // /// mpz_cmp_d can be called with an infinity, but results are undefined for a NaN.
-    // fn mpz_cmp_d (mpz t op1, double op2) -> c_int;
+    /// Compare op1 and op2. Return a positive value if op1 > op2, zero if op1 = op2, or a negative
+    /// value if op1 < op2.
+    ///
+    /// mpz_cmp_ui and mpz_cmp_si are macros and will evaluate their arguments more than once.
+    /// mpz_cmp_d can be called with an infinity, but results are undefined for a NaN.
+    pub fn mpz_cmp_d (op1: mpz_srcptr, op2: c_double) -> c_int;
 
-    // TODO mpz_cmp_si
-    // /// Compare op1 and op2. Return a positive value if op1 > op2, zero if op1 = op2, or a negative
-    // /// value if op1 < op2.
-    // ///cros and will evaluate their arguments more than once.
-    // /// mpz_cmp_d can be called with an infinity, but results are undefined for a NaN.
-    // fn mpz_cmp_si (mpz t op1, mpir si op2) -> c_int;
+    /// Compare op1 and op2. Return a positive value if op1 > op2, zero if op1 = op2, or a negative
+    /// value if op1 < op2.
+    ///cros and will evaluate their arguments more than once.
+    /// mpz_cmp_d can be called with an infinity, but results are undefined for a NaN.
+    pub fn mpz_cmp_si (op1: mpz_srcptr, op2: c_long) -> c_int;
 
-    // TODO mpz_cmp_ui
-    // /// Compare op1 and op2. Return a positive value if op1 > op2, zero if op1 = op2, or a negative
-    // /// value if op1 < op2.
-    // ///
-    // /// mpz_cmp_ui and mpz_cmp_si are macros and will evaluate their arguments more than once.
-    // /// mpz_cmp_d can be called with an infinity, but results are undefined for a NaN.
-    // fn mpz_cmp_ui (mpz t op1, mpir ui op2) -> c_int;
+    /// Compare op1 and op2. Return a positive value if op1 > op2, zero if op1 = op2, or a negative
+    /// value if op1 < op2.
+    ///
+    /// mpz_cmp_ui and mpz_cmp_si are macros and will evaluate their arguments more than once.
+    /// mpz_cmp_d can be called with an infinity, but results are undefined for a NaN.
+    pub fn mpz_cmp_ui (op1: mpz_srcptr, op2: c_ulong) -> c_int;
 
-    // TODO mpz_cmpabs
-    // /// Compare the absolute values of op1 and op2. Return a positive value if |op1| > |op2|, zero
-    // /// if |op1| = |op2|, or a negative value if |op1| < |op2|.
-    // ///
-    // /// mpz_cmpabs_d can be called with an infinity, but results are undefined for a NaN.
-    // fn mpz_cmpabs (mpz t op1, mpz t op2) -> c_int;
+    /// Compare the absolute values of op1 and op2. Return a positive value if |op1| > |op2|, zero
+    /// if |op1| = |op2|, or a negative value if |op1| < |op2|.
+    ///
+    /// mpz_cmpabs_d can be called with an infinity, but results are undefined for a NaN.
+    pub fn mpz_cmpabs (op1: mpz_srcptr, op2: mpz_srcptr) -> c_int;
 
-    // TODO mpz_sgn
-    // /// Return +1 if op > 0, 0 if op = 0, and −1 if op < 0.
-    // /// This function is actually implemented as a macro. It evaluates its argument multiple times.
-    // mpz_sgn (mpz t op) -> c_int;
+    /// Compare the absolute values of op1 and op2. Return a positive value if |op1| > |op2|, zero
+    /// if |op1| = |op2|, or a negative value if |op1| < |op2|.
+    ///
+    /// mpz_cmpabs_d can be called with an infinity, but results are undefined for a NaN.
+    pub fn mpz_cmpabs_d (op1: mpz_srcptr, op2: c_double) -> c_int;
 
-    // TODO mpz_cmpabs_d
-    // /// Compare the absolute values of op1 and op2. Return a positive value if |op1| > |op2|, zero
-    // /// if |op1| = |op2|, or a negative value if |op1| < |op2|.
-    // ///
-    // /// mpz_cmpabs_d can be called with an infinity, but results are undefined for a NaN.
-    // fn mpz_cmpabs_d (mpz t op1, double op2) -> c_int;
+    /// Compare the absolute values of op1 and op2. Return a positive value if |op1| > |op2|, zero
+    /// if |op1| = |op2|, or a negative value if |op1| < |op2|.
+    ///
+    /// mpz_cmpabs_d can be called with an infinity, but results are undefined for a NaN.
+    pub fn mpz_cmpabs_ui (op1: mpz_srcptr, op2: c_ulong) -> c_int;
 
-    // TODO mpz_sgn
-    // /// Return +1 if op > 0, 0 if op = 0, and −1 if op < 0.
-    // /// This function is actually implemented as a macro. It evaluates its argument multiple times.
-    // fn mpz_sgn (mpz t op) -> c_int;
-
-    // TODO mpz_cmpabs_ui
-    // /// Compare the absolute values of op1 and op2. Return a positive value if |op1| > |op2|, zero
-    // /// if |op1| = |op2|, or a negative value if |op1| < |op2|.
-    // ///
-    // /// mpz_cmpabs_d can be called with an infinity, but results are undefined for a NaN.
-    // fn mpz_cmpabs_ui (mpz t op1, mpir ui op2) -> c_int;
-
-    // TODO mpz_sgn
-    // /// Return +1 if op > 0, 0 if op = 0, and −1 if op < 0.
-    // /// This function is actually implemented as a macro. It evaluates its argument multiple times.
-    // fn mpz_sgn (mpz t op) -> c_int;
+    /// Return +1 if op > 0, 0 if op = 0, and −1 if op < 0.
+    /// This function is actually implemented as a macro. It evaluates its argument multiple times.
+    fn mpz_sgn (op1: mpz_srcptr) -> c_int;
 
     // ---------------------------------------------------------------------------------------------
     // Logical and Bit Manipulation Functions
@@ -752,71 +736,59 @@ extern "C" {
     /* These functions behave as if twos complement arithmetic were used (although sign-magnitude
     is the actual implementation). The least significant bit is number 0. */
 
-    // TODO mpz_and
-    // /// Set rop to op1 bitwise-and op2.
-    // fn mpz_and (mpz t rop, mpz t op1, mpz t op2);
+    /// Set rop to op1 bitwise-and op2.
+    pub fn mpz_and (rop: mpz_ptr, op1: mpz_srcptr, op2: mpz_srcptr);
 
-    // TODO mpz_ior
-    // /// Set rop to op1 bitwise inclusive-or op2.
-    // fn mpz_ior (mpz t rop, mpz t op1, mpz t op2);
+    /// Set rop to op1 bitwise inclusive-or op2.
+    pub fn mpz_ior (rop: mpz_ptr, op1: mpz_srcptr, op2: mpz_srcptr);
 
-    // TODO mpz_xor
-    // /// Set rop to op1 bitwise exclusive-or op2.
-    // fn mpz_xor (mpz t rop, mpz t op1, mpz t op2);
+    /// Set rop to op1 bitwise exclusive-or op2.
+    pub fn mpz_xor (rop: mpz_ptr, op1: mpz_srcptr, op2: mpz_srcptr);
 
-    // TODO mpz_com
-    // /// Set rop to the one’s complement of op.
-    // fn mpz_com (mpz t rop, mpz t op);
+    /// Set rop to the one’s complement of op.
+    pub fn mpz_com (rop: mpz_ptr, op: mpz_srcptr);
 
-    // TODO mpz_popcount
-    // /// If op ≥ 0, return the population count of op, which is the number of 1 bits in the binary
-    // /// representation. If op < 0, the number of 1s is infinite, and the return value is ULONG MAX,
-    // /// the largest possible mp_bitcnt_t.
-    // fn mpz_popcount (mpz t op) -> mp_bitcnt_t;
+    /// If op ≥ 0, return the population count of op, which is the number of 1 bits in the binary
+    /// representation. If op < 0, the number of 1s is infinite, and the return value is ULONG MAX,
+    /// the largest possible mp_bitcnt_t.
+    pub fn mpz_popcount (rop: mpz_ptr) -> mp_bitcnt_t;
 
-    // TODO mpz_hamdist
-    // /// If op1 and op2 are both ≥ 0 or both < 0, return the hamming distance between the two
-    // /// operands, which is the number of bit positions where op1 and op2 have different bit values.
-    // ///
-    // /// If one operand is ≥ 0 and the other < 0 then the number of bits different is infinite, and the
-    // /// return value is the largest possible imp_bitcnt_t.
-    // fn mpz_hamdist (mpz t op1, mpz t op2) -> mp_bitcnt_t;
+    /// If op1 and op2 are both ≥ 0 or both < 0, return the hamming distance between the two
+    /// operands, which is the number of bit positions where op1 and op2 have different bit values.
+    ///
+    /// If one operand is ≥ 0 and the other < 0 then the number of bits different is infinite, and the
+    /// return value is the largest possible imp_bitcnt_t.
+    pub fn mpz_hamdist (op1: mpz_srcptr, op2: mpz_srcptr) -> mp_bitcnt_t;
 
-    // TODO mpz_scan0
-    // /// Scan op, starting from bit starting bit, towards more significant bits, until the first 0 or 1 bit
-    // /// (respectively) is found. Return the index of the found bit.
-    // ///
-    // /// If the bit at starting bit is already what’s sought, then starting bit is returned.
-    // /// If there’s no bit found, then the largest possible mp_bitcnt_t is returned. This will happen
-    // /// in mpz_scan0 past the end of a positive number, or mpz_scan1 past the end of a nonnegative
-    // /// number.
-    // fn mpz_scan0 (mpz t op, mp bitcnt t starting_bit) -> mp_bitcnt_t;
+    /// Scan op, starting from bit starting bit, towards more significant bits, until the first 0 or 1 bit
+    /// (respectively) is found. Return the index of the found bit.
+    ///
+    /// If the bit at starting bit is already what’s sought, then starting bit is returned.
+    /// If there’s no bit found, then the largest possible mp_bitcnt_t is returned. This will happen
+    /// in mpz_scan0 past the end of a positive number, or mpz_scan1 past the end of a nonnegative
+    /// number.
+    pub fn mpz_scan0 (op: mpz_srcptr, starting_bit: mp_bitcnt_t) -> mp_bitcnt_t;
 
-    // TODO mpz_scan1
-    // /// Scan op, starting from bit starting bit, towards more significant bits, until the first 0 or 1 bit
-    // /// (respectively) is found. Return the index of the found bit.
-    // ///
-    // /// If the bit at starting bit is already what’s sought, then starting bit is returned.
-    // /// If there’s no bit found, then the largest possible mp_bitcnt_t is returned. This will happen
-    // /// in mpz_scan0 past the end of a positive number, or mpz_scan1 past the end of a nonnegative
-    // /// number.
-    // fn mpz_scan1 (mpz t op, mp bitcnt t starting_bit) -> mp_bitcnt_t;
+    /// Scan op, starting from bit starting bit, towards more significant bits, until the first 0 or 1 bit
+    /// (respectively) is found. Return the index of the found bit.
+    ///
+    /// If the bit at starting bit is already what’s sought, then starting bit is returned.
+    /// If there’s no bit found, then the largest possible mp_bitcnt_t is returned. This will happen
+    /// in mpz_scan0 past the end of a positive number, or mpz_scan1 past the end of a nonnegative
+    /// number.
+    pub fn mpz_scan1 (op: mpz_srcptr, starting_bit: mp_bitcnt_t) -> mp_bitcnt_t;
 
-    // TODO mpz_setbit
-    // /// Set bit bit index in rop.
-    // fn mpz_setbit (mpz t rop, mp bitcnt t bit_index);
+    /// Set bit bit index in rop.
+    pub fn mpz_setbit (rop: mpz_ptr, bit_index: mp_bitcnt_t);
 
-    // TODO mpz_clrbit
-    // /// Clear bit bit index in rop.
-    // fn mpz_clrbit (mpz t rop, mp bitcnt t bit_index);
+    /// Clear bit bit index in rop.
+    pub fn mpz_clrbit (rop: mpz_ptr, bit_index: mp_bitcnt_t);
 
-    // TODO mpz_combit
-    // /// Complement bit bit index in rop.
-    // fn mpz_combit (mpz t rop, mp bitcnt t bit_index);
+    /// Complement bit bit index in rop.
+    pub fn mpz_combit (rop: mpz_ptr, bit_index: mp_bitcnt_t);
 
-    // TODO mpz_tstbit
-    // /// Test bit bit index in op and return 0 or 1 accordingly.
-    // fn mpz_tstbit (mpz t op, mp bitcnt t bit_index) -> c_int;
+    /// Test bit bit index in op and return 0 or 1 accordingly.
+    pub fn mpz_tstbit (op: mpz_srcptr, starting_bit: mp_bitcnt_t) -> c_int;
 
     // ---------------------------------------------------------------------------------------------
     // Random Number Functions
@@ -833,14 +805,14 @@ extern "C" {
     // ///
     // /// The variable state must be initialized by calling one of the gmp_randinit functions
     // /// (Section 9.1 [Random State Initialization], page 67) before invoking this function.
-    // fn mpz_urandomb (mpz t rop, gmp randstate t state, mp bitcnt t n);
+    // pub fn mpz_urandomb (mpz t rop, gmp randstate t state, mp bitcnt t n);
 
     // TODO mpz_urandomm
     // /// Generate a uniform random integer in the range 0 to n − 1, inclusive.
     // ///
     // /// The variable state must be initialized by calling one of the gmp_randinit functions
     // /// (Section 9.1 [Random State Initialization], page 67) before invoking this function.
-    // fn mpz_urandomm (mpz t rop, gmp randstate t state, mpz t n);
+    // pub fn mpz_urandomm (mpz t rop, gmp randstate t state, mpz t n);
 
     // TODO mpz_rrandomb
     // /// Generate a random integer with long strings of zeros and ones in the binary representation.
@@ -850,67 +822,58 @@ extern "C" {
     // /// 2n − 1, inclusive.
     // /// The variable state must be initialized by calling one of the gmp_randinit functions
     // /// (Section 9.1 [Random State Initialization], page 67) before invoking this function.
-    // fn mpz_rrandomb (mpz t rop, gmp randstate t state, mp bitcnt t n);
+    // pub fn mpz_rrandomb (mpz t rop, gmp randstate t state, mp bitcnt t n);
 
     // ---------------------------------------------------------------------------------------------
     // Miscellaneous Functions
 
-    // TODO mpz_fits_ulong_p
-    // /// Return non-zero iff the value of op fits in an unsigned long, long, unsigned int, signed
-    // /// int, unsigned short int, or signed short int, respectively. Otherwise, return zero.
-    // fn mpz_fits_ulong_p (mpz t op) -> c_int;
+    /// Return non-zero iff the value of op fits in an unsigned long, long, unsigned int, signed
+    /// int, unsigned short int, or signed short int, respectively. Otherwise, return zero.
+    pub fn mpz_fits_ulong_p (op: mpz_srcptr) -> c_int;
 
-    // TODO mpz_fits_slong_p
-    // /// Return non-zero iff the value of op fits in an unsigned long, long, unsigned int, signed
-    // /// int, unsigned short int, or signed short int, respectively. Otherwise, return zero.
-    // fn mpz_fits_slong_p (mpz t op) -> c_int;
+    /// Return non-zero iff the value of op fits in an unsigned long, long, unsigned int, signed
+    /// int, unsigned short int, or signed short int, respectively. Otherwise, return zero.
+    pub fn mpz_fits_slong_p (op: mpz_srcptr) -> c_int;
 
-    // TODO mpz_fits_uint_p
-    // /// Return non-zero iff the value of op fits in an unsigned long, long, unsigned int, signed
-    // /// int, unsigned short int, or signed short int, respectively. Otherwise, return zero.
-    // fn mpz_fits_uint_p (mpz t op) -> c_int;
+    /// Return non-zero iff the value of op fits in an unsigned long, long, unsigned int, signed
+    /// int, unsigned short int, or signed short int, respectively. Otherwise, return zero.
+    pub fn mpz_fits_uint_p (op: mpz_srcptr) -> c_int;
 
-    // TODO mpz_fits_sint_p
-    // /// Return non-zero iff the value of op fits in an unsigned long, long, unsigned int, signed
-    // /// int, unsigned short int, or signed short int, respectively. Otherwise, return zero.
-    // fn mpz_fits_sint_p (mpz t op) -> c_int;
+    /// Return non-zero iff the value of op fits in an unsigned long, long, unsigned int, signed
+    /// int, unsigned short int, or signed short int, respectively. Otherwise, return zero.
+    pub fn mpz_fits_sint_p (op: mpz_srcptr) -> c_int;
 
-    // TODO mpz_fits_ushort_p
-    // /// Return non-zero iff the value of op fits in an unsigned long, long, unsigned int, signed
-    // /// int, unsigned short int, or signed short int, respectively. Otherwise, return zero.
-    // fn mpz_fits_ushort_p (mpz t op) -> c_int;
+    /// Return non-zero iff the value of op fits in an unsigned long, long, unsigned int, signed
+    /// int, unsigned short int, or signed short int, respectively. Otherwise, return zero.
+    pub fn mpz_fits_ushort_p (op: mpz_srcptr) -> c_int;
 
-    // TODO mpz_fits_sshort_p
-    // /// Return non-zero iff the value of op fits in an unsigned long, long, unsigned int, signed
-    // /// int, unsigned short int, or signed short int, respectively. Otherwise, return zero.
-    // fn mpz_fits_sshort_p (mpz t op) -> c_int;
+    /// Return non-zero iff the value of op fits in an unsigned long, long, unsigned int, signed
+    /// int, unsigned short int, or signed short int, respectively. Otherwise, return zero.
+    pub fn mpz_fits_sshort_p (op: mpz_srcptr) -> c_int;
 
-    // TODO mpz_odd_p
-    // /// Determine whether op is odd or even, respectively. Return non-zero if yes, zero if no. These
-    // /// macros evaluate their argument more than once.
-    // fn mpz_odd_p (mpz t op) -> c_int;
+    /// Determine whether op is odd or even, respectively. Return non-zero if yes, zero if no. These
+    /// macros evaluate their argument more than once.
+    pub fn mpz_odd_p (op: mpz_srcptr) -> c_int;
 
-    // TODO mpz_even_p
-    // /// Determine whether op is odd or even, respectively. Return non-zero if yes, zero if no. These
-    // /// macros evaluate their argument more than once.
-    // fn mpz_even_p (mpz t op) -> c_int;
+    /// Determine whether op is odd or even, respectively. Return non-zero if yes, zero if no. These
+    /// macros evaluate their argument more than once.
+    pub fn mpz_even_p (op: mpz_srcptr) -> c_int;
 
-    // TODO mpz_sizeinbase
-    // /// Return the size of op measured in number of digits in the given base. base can vary from 2
-    // /// to 36.
-    // ///
-    // /// The sign of op is ignored, just the absolute value is used. The result will be either
-    // /// exact or 1 too big. If base is a power of 2, the result is always exact. If op is zero the return
-    // /// value is always 1.
-    // ///
-    // /// This function can be used to determine the space required when converting op to a string. The
-    // /// right amount of allocation is normally two more than the value returned by mpz_sizeinbase,
-    // /// one extra for a minus sign and one for the null-terminator.
-    // ///
-    // /// It will be noted that mpz_sizeinbase(op,2) can be used to locate the most significant 1 bit
-    // /// in op, counting from 1. (Unlike the bitwise functions which start from 0, See Section 5.11
-    // /// [Logical and Bit Manipulation Functions], page 39.)
-    // fn mpz_sizeinbase (mpz t op, int base) -> size_t;
+    /// Return the size of op measured in number of digits in the given base. base can vary from 2
+    /// to 36.
+    ///
+    /// The sign of op is ignored, just the absolute value is used. The result will be either
+    /// exact or 1 too big. If base is a power of 2, the result is always exact. If op is zero the return
+    /// value is always 1.
+    ///
+    /// This function can be used to determine the space required when converting op to a string. The
+    /// right amount of allocation is normally two more than the value returned by mpz_sizeinbase,
+    /// one extra for a minus sign and one for the null-terminator.
+    ///
+    /// It will be noted that mpz_sizeinbase(op,2) can be used to locate the most significant 1 bit
+    /// in op, counting from 1. (Unlike the bitwise functions which start from 0, See Section 5.11
+    /// [Logical and Bit Manipulation Functions], page 39.)
+    pub fn mpz_sizeinbase (op: mpz_srcptr, base: c_int) -> size_t;
 
     // ---------------------------------------------------------------------------------------------
     // Special Functions
@@ -946,7 +909,7 @@ extern "C" {
     // /// For other functions, or if in doubt, the suggestion is to calculate in a regular mpz_init variable
     // /// and copy the result to an array variable with mpz_set.
     // /// This function is obsolete. It will disappear from future MPIR releases.
-    // fn mpz_array_init(mpz t integer_array, size t array_size, mp size t fixed_num_bits);
+    // pub fn mpz_array_init(mpz t integer_array, size t array_size, mp size t fixed_num_bits);
 
     // TODO _mpz_realloc
     // /// Change the space for integer to new alloc limbs. The value in integer is preserved if it fits,
@@ -962,10 +925,9 @@ extern "C" {
     // /// is outside the range 0 to mpz_size(op)-1.
     // mp_limb_t mpz_getlimbn (mpz t op, mp size t n)
 
-    // TODO mpz_size
-    // /// Return the size of op measured in number of limbs. If op is zero, the returned value will be
-    // /// zero.
-    // size_t mpz_size (mpz t op)
+    /// Return the size of op measured in number of limbs. If op is zero, the returned value will be
+    /// zero.
+    fn mpz_size (op: mpz_srcptr) -> c_size_t;
 
     // TODO mpz_limbs_read
     // /// Return a pointer to the limb array representing the absolute value of x.
@@ -1002,7 +964,7 @@ extern "C" {
     // /// xp[n+i] = xp[n-1-i];
     // /// mpz_limbs_finish (x, mpz_sgn (x) < 0 ? - 2*n : 2*n);
     // /// }
-    // fn mpz_limbs_finish (mpz t x, mp size t s);
+    // pub fn mpz_limbs_finish (mpz t x, mp size t s);
 
     // TODO mpz_roinit_n
     // /// Special initialization of x, using the given limb array and size. x should be treated as read-
