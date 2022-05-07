@@ -995,15 +995,3 @@ extern "C" {
 
     // ---------------------------------------------------------------------------------------------
 }
-
-pub struct Mpz(mpz_struct);
-
-impl Mpz {}
-
-#[cfg(test)]
-mod test {
-    use super::*;
-
-    #[test]
-    fn new() {}
-}
