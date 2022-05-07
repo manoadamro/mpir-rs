@@ -1,6 +1,9 @@
-pub mod ctype;
-mod mpz;
-mod sign;
+#![feature(c_size_t)]
+extern crate core;
 
-pub use mpz::*;
-pub use sign::*;
+pub mod ctype;
+pub mod mpz;
+pub mod sign;
+
+pub use mpz::Mpz;
+pub use sign::Sign;
