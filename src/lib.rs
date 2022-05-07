@@ -1,4 +1,3 @@
-#![feature(c_size_t)]
 extern crate core;
 
 pub mod ctype;
