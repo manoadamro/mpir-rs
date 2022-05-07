@@ -16,6 +16,18 @@ use crate::Sign;
 extern "C" {
 
     // ---------------------------------------------------------------------------------------------
+    // Constants
+
+    /// The MPIR version number, as a null-terminated string, in the form “i.j.k”.
+    static mpir_version: *const c_char;
+
+    /// The GNU MP version number, as a null-terminated string, in the form “i.j.k”.
+    static gmp_version: *const c_char;
+
+    /// The number of bits per limb.
+    static mp_bits_per_limb: c_int;
+
+    // ---------------------------------------------------------------------------------------------
     // Initialisation Functions
 
     /* The functions for integer arithmetic assume that all integer objects are initialized.
@@ -994,4 +1006,16 @@ extern "C" {
     // mpz_t MPZ_ROINIT_N (mp limb t *xp, mp size t xs)
 
     // ---------------------------------------------------------------------------------------------
+}
+
+pub struct Mpz(mpz_struct);
+
+impl Mpz {}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[test]
+    fn new() {}
 }
