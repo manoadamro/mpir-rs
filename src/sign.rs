@@ -1,3 +1,5 @@
+//! For pos/neg checks
+
 #[derive(PartialEq, Eq, PartialOrd, Ord, Clone, Copy, Hash, Debug)]
 pub enum Sign {
     Negative,
