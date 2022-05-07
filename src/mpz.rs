@@ -6,7 +6,7 @@ use std::mem::{size_of, uninitialized};
 
 use crate::ctype::{
     c_char, c_double, c_int, c_long, c_ulong, c_void, mp_bitcnt_t, mpz_ptr, mpz_srcptr, mpz_struct,
-    size_t, CString, mp_limb_t, c_size_t
+    size_t, CString, mp_limb_t
 };
 
 use crate::Sign;
@@ -938,7 +938,7 @@ extern "C" {
 
     /// Return the size of op measured in number of limbs. If op is zero, the returned value will be
     /// zero.
-    fn mpz_size (op: mpz_srcptr) -> c_size_t;
+    fn mpz_size (op: mpz_srcptr) -> size_t;
 
     // TODO mpz_limbs_read
     // /// Return a pointer to the limb array representing the absolute value of x.
